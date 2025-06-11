@@ -2,12 +2,15 @@ from flask import Flask, request, jsonify
 import requests
 import json
 import logging
+from flask_cors import CORS
+
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+CORS(app)
 
 # The Tool
 def chromaQuery(q):
@@ -88,10 +91,10 @@ def query():
                 logger.info(f"Raw response text: {response.text}")
                 return jsonify({'error': f'Invalid JSON from LLM: {str(e)}'}), 500
             #logger.info(f"Raw response text: {response.text}")
-            #logger.info(f"Raw data!!!!!!!! {data}")
-            content = data['message']['content']
-            assistant_message = content #["choices"][0]["message"]
+            logger.info(f"Raw data!!!!!!!! {data}")
+            assistant_message = data['message']
             messages.append(assistant_message)
+            
             
             logger.info(f"Assistant message: {assistant_message}")
             
@@ -133,5 +136,6 @@ def query():
         return jsonify({'error': f'Error processing request: {str(e)}'}), 500
     
 if __name__ == '__main__':
+    CORS(app)
     logger.info("LP Agent API starting up...")
     app.run(host='0.0.0.0', port=5001, debug=False)

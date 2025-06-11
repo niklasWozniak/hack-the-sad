@@ -30,14 +30,14 @@
             fetch('http://127.0.0.1:5001/query', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message })
+                body: JSON.stringify({input: message})
             })
                 .then(res => res.json())
                 .then(data => {
                     document.getElementById('spinner').remove();
                     const botMessage = document.createElement('div');
                     botMessage.className = 'message bot';
-                    botMessage.textContent = data?.messages?.content || 'No response';
+                    botMessage.textContent = data?.response || 'No response';
                     chatLog.appendChild(botMessage);
                     chatLog.scrollTop = chatLog.scrollHeight;
                 })
