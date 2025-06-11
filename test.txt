@@ -1,0 +1,3754 @@
+1 Introduction
+This is the Software Architecture Document for the Loan Process application (also known as EDB Kreditt, ECP or LP). 
+
+
+
+Loan Process is loan origination, change process, engagement renewal and loss process in one coherent system.  The solution is built over years to support bank advisors handling the credit process and supports both retail and corporate customers.
+
+Loan Process handles the complete process from application through analyses, decision, and production, integrated with support systems as policy, document production, eLoan, esigning, collateral and automated disbursement to provide an efficient, compliant credit process.  
+
+Loan Processing have during the last years participated in the DSOP collaboration engaging in the digitalization/automatization process driven by BITS and developed support for consent-based loan application.  eLoan also provide digitized processes. 
+
+As the name suggests, the Loan Process is implemented as a process with an inbuilt process engine (not to be confused with industry BPMN  (Business Process Model and Notation) based process engines like Camunda). 
+
+Loan Process is tightly integrated with self-service channels, so that the customer can start the loan application digitally and the bank employee can continue the credit process in Loan Process. This ensures an efficient workflow across channels,
+
+Loan Process has also an extensive administration module realized as a stand-alone client, and is furthermore integrated to a vast amount of internal and external systems. 
+
+
+
+Loan Process is an BaaP application in contrast to standard BaaS.  This means that LP is part of an ecosystem, and thus cannot be delivered stand alone (doesn't make any sense at all to do so).  This add strength to the functionality and robustness, but also add complexity to the delivery pipeline
+
+
+
+For a short overall introduction: ECP Short introduction
+
+1.1 Purpose
+This documents aim is to provide a comprehensive architectural overview of the application, using a number of different architectural views to depict and describe different aspects of the system.  It is intended to capture and convey the significant architectural decisions which have been made for the system. 
+
+The document describes the architecture in the system solution for Loan Process.  The primary aim is for the document to provide those taking part in the project with a common understanding of the architecture and, in particular, point to those elements in the system solution that are critical for the architecture.
+
+Furthermore, the document should also provide architects and technical managers within TietoEvry FS and with our customers an overview of the application, with special focus on the decisions, principles and techniques that has been applied. 
+
+For questions about the overall setup => Enterprise Architecture unit in Tietoevry Banking-Essentials:  ArchitecturesupportFS@evry.com
+
+1.2 Scope
+This document represents an architectural description of the system solution for the Loan Process project, and is not intended to be a complete description of the application; only those parts which are significant for the architecture will be described.
+
+This document should be read in conjunction with the "Workflow Architecture Document" [ref. 3] and possibly also "Loan Process Design and Programming Guidelines" [ref. 4] 
+
+1.3 Overview
+The other chapters of this document is organised as recommended by the Rational Unified Process (RUP). The architecture of the credit processes is described by means of using different views / viewpoints. This is outlined in chapter 3.  
+
+1.4 Definitions, Acronyms and Abbreviations
+(Keep in alphabetical order)
+
+
+
+ACE	
+The present card system in TE
+
+ACT	
+The activity system/client
+
+ACTS	
+Activity services
+
+AS	
+The “stand alone” Activity System in TE FS, which replaced the activity system in FDFront, and the activity system in WLI.
+
+BaaP	
+Business as a Platform. It is a concept that refers to businesses providing a digital platform to enable other businesses or individuals to build and operate their own applications, services, or ecosystems on top of their existing infrastructure.
+
+BaaP allows organizations to open up their core business capabilities, data, and services as APIs (Application Programming Interfaces) to external developers, partners, or customers.
+
+By becoming a platform, businesses can create new sources of revenue, expand their reach, and foster innovation by allowing others to build on top of their existing offerings.
+
+BaaP can be seen in various industries such as e-commerce, banking, transportation, and healthcare, where businesses provide APIs or developer tools to enable others to create their own applications or services.
+
+It enables collaboration, integration, and customization, ultimately leading to a more interconnected and flexible business ecosystem.
+
+BaaS	
+Backend as a Service. It is a cloud computing service model that provides developers with a prebuilt backend infrastructure to support the development of web and mobile applications.
+
+BaaS platforms typically offer features such as database management, user authentication, file storage, push notifications, and server-side logic.
+
+With BaaS, developers can focus on building the frontend of their applications while leveraging the prebuilt backend functionality provided by the service.
+
+This allows for faster development and deployment of applications without the need to manage and maintain complex backend infrastructure.
+
+BaaS platforms often provide APIs and SDKs (Software Development Kits) that allow developers to easily integrate their applications with the backend services offered by the platform.
+
+This enables developers to access and utilize cloud-based resources, data storage, and other services without having to build and manage them from scratch.
+
+Some popular BaaS platforms include Firebase, AWS Amplify, and Parse Server.
+
+BITS	
+ Bits AS – bankenes infrastrukturselskap
+
+BPMN 	
+Business Process Model and Notation
+
+Camunda	
+BPMN based process model engine
+
+Composite components	
+Functional components containing business logic spanning more than one specific domain, for instance agreement, price and product combined.  This business logic is therefore on "higher" level in the business logic stack. 
+
+DAO	
+Data Access Object 
+
+DDS	
+DDS - Data Driven Services (former known as InfoTorg and IM (Information Management)), is the unit in TE where information from public registers, credit information registers and more are facilitated for internal users- like LP and Third Parties like the banks.  Read more about it here:  https://www.infotorg.no/om-infotorg
+
+DOCS	
+Document services
+
+Domain components 	
+Business components containing business logic for a specific domain, for instance score, document, price etc. 
+
+DSOP	
+Project for Digital Property Trade (Digital Samhandling Ved Eiendomshandel)
+
+EAM	
+Authorization client/system delivered by TE FS 
+
+ECP	
+Loan Process / Credit Process   / TietoEvryFS Kreditt Prosess / KP+ delivered by TietoEvry FS /EDB Kreditt / LP  (many names, which hint at the rather long lifespan)
+
+ECPS	
+Loan Process Services
+
+EDV 	
+Eiendomsverdi  (A register of  private properties width value estimates) 
+
+EIS	
+Enterprise Information Server
+
+EJB	
+Enterprise Java Beans. Part of the J2EE component platform.  NB! Not in use in Loan Process 
+
+eLoan	
+ eLoan is a product that delivers functionality within the Loan Process application with integrations to several other Tietoevry services. The product goal is to minimize the paper consumption in a credit case and make efficient digital solutions
+
+ELS	
+SLS (Former ELS), the lending System, “Valuta / Lån system” delivered by TE FS
+
+ESG	
+The Environmental, Social and Governance system/client
+
+eSign	
+Electronic multi-signature engine delivered by TE FS.  This solution is based on use of the Norwegian BankId signature method. 
+
+ESIS	
+ Electronic signature web services,  a part of the electronic multi-signature system delivered by TE FS. 
+
+FD Card
+
+The legacy card system in TE
+
+FD Front 
+
+The "old" family of branch solutions, "thick" client/server-based (FD Kreditt is the credit part of this family). Other parts are : Customer File (Kundevedlikehold), Sale & Analysis and Every day banking (dagligbank). 
+
+FIA
+
+The Financial Advisory system/client
+
+FTS
+
+Transaction system for capital transactions delivered by TE FS
+
+HTML
+
+Hypertext Markup Language – Standard for visual coding of web pages.
+
+HTTP
+
+HyperText Transfer Protocol – a protocol (utilizing TCP/IP) to transfer hypertext requests and responses over networks
+
+HTTPS
+
+HyperText Transfer Protocol Secure – a variant of HTTP (utilizing SSL) to make secure transfers of requests and responses over networks
+
+iHUB Org
+
+Organization client/system (Having a tree-structure of the Bank organisation).  Replaces organization functionality in the channels (like in the FDFront Rammeverk). Delivered by TE FS. 
+
+iHUB Product
+
+Product and price system at TF FS Core, earlier called POP, delivered by TE FS
+
+IM
+
+TE Information Management
+
+IPC
+
+Inter Process Communication
+
+JAAS
+
+Java Authentication and Authorization Service
+
+Java
+
+Object-oriented programming language. Often used at application server level, but the code is basically portable to a number of other platforms.
+
+J2EE and
+
+Java EE
+
+ 
+
+Java 2 Enterprise Edition – Java version suitable for developing in large development environments. Contains a number of standards for simplifying development across different environments and platforms.
+
+From 2007 onwards ( ~J2EE 1.5) also known as Java Enterprise Edition  (J EE)
+
+ 
+
+JDBC
+
+Java DataBase Connectivity – standardized database interface for Java to use with any SQL database that has a JDBC-driver
+
+JSF
+
+JavaServer Face – a technology that provides framework services and provides a GUI through JSP
+
+JSP
+
+Java Server Page – Standard Java method of coding a screen. A server side technology that facilitates the development of dynamic Web pages and Web applications using components
+
+KBM
+
+The legacy credit process for corporate customers
+
+KPM
+
+The legacy credit Process for private market (CPM)
+
+KP
+
+Combined Credit Process for Private & Commercial Market – Granting / Loan Origination Process. Also known as CP in English.
+
+LandReg
+
+Land- registration, called Tinglysning in Norwegian
+
+LP
+
+The current credit process application in the loan processing domain
+
+MK
+
+Core Component for Arrears (defaults)/Loss register and follow up
+
+NE
+
+Norwegian property information firm: Norsk Eiendomsinformasjon
+
+OWASP
+
+Open Web Application Security Project
+
+POJO
+
+Plain Old Java Object – light-weight Java Beans in contrast to more heavy-weight Enterprise Java Beans
+
+SA
+
+Secure Access delivered by TE FS
+
+SAD
+
+Software Architecture Document
+
+SAML
+
+Security Assertion Markup Language
+
+SBK
+
+SSL (former SBK), self Service lending process / “Selvbetjent kreditt” delivered by TE FS
+
+SCS
+
+Sales and Customer Service application – replaces the old FD Dagligbank (part of FD Front) delivered by TE FS
+
+SDO
+
+Signed document with eSign
+
+SLS
+
+SLS (Former ELS), the lending System, “Valuta / Lån system” delivered by TE FS
+
+SO
+
+Security object – encrypted to prevent access in secure URL jump.
+
+SOA
+
+SOA = Service Oriented Architecture Any business application that implements these five principles is an SOA application:
+
+1.       The system must be modular. This provides the obvious benefit of being able to divide and conquer — solve a complex problem by assembling a set of small, simple components that work together.
+
+2.      The modules must be distributable, able to run on disparate computers and communicate with each other by sending messages over a network at runtime.
+
+3.      Module interfaces must be clearly defined and documented. Software developers write or generate interface metadata that specifies an explicit contract so that another developer can find and use the service (this helps enable loose coupling).
+
+4.      A module that implements a service can be swapped out for another module that offers the same service and interface, because the interface designed is separate from the module. This is an aspect of loose coupling and it enables incremental maintenance and enhancements.
+
+5.      Service provider modules must be shareable — that is, designed and deployed in a manner that enables them to be invoked successively by disparate service-consumer modules engaged in somewhat diverse, although partially related, business activities.
+
+SOA is a perspective of software architecture that defines the use of loosely coupled software services to support the requirements of the business processes and software users. A SOA is not tied to a specific technology. To successfully implement SOA it is very important to design reusable services.
+
+SSL
+
+Self Service Lending
+
+TE
+
+TietoEvry
+
+TietoEvry FS
+
+TietoEvry Financial Services. There may be references in the text where TE IT Operations is meant. We believe this will be obvious from the context.  
+
+WLI
+
+TE FS Worklist application and database delivered by TE FS (Replaced by AS)
+
+WS (WebService)
+
+XML /SOAP  message coded according to a specific format to simplify the dialogue between two parties (computer to computer) over a network or REST based
+
+WUI and GUI
+
+Web User Interface and Graphical User Interface
+
+Table 1 – Definitions, acronyms and abbreviations
+
+1.5 References
+
+
+1	LP SAD (This document)
+2	
+Reference architecture: TietoEvry FS - Architecture Principles. 
+
+Architecture - Architecture - Wiki (finods.com)
+
+3	
+WAD - Workflow Architecture Document  
+
+Workflow Engine
+
+4	
+Loan Process Design and Programming Guidelines 
+
+Guidlines:
+
+https://wiki.finods.com/display/loanprocessing/Development+standards
+
+Howto's:
+
+https://wiki.finods.com/display/loanprocessing/How-To%27s+-+Development
+
+Architectural overview:
+
+ECP Architectural overview
+
+5	
+OWASP home page : http://www.owasp.org
+
+6	
+RUP on TE intranet
+
+7	
+EVRY FS Web Services Standards & Guidelines on https://wiki.finods.com//display/architecture/Web+Services+-+tools+and+tips
+
+8	TE FS Config&Log Guidelines on TE intranet
+9	Loan Process Services (ECPS) Software Architecture Document ASP
+10	Loan Process wiki on Loan Process
+Table 2 – References
+
+2 Architectural Overview
+2.1 Functional overview
+Functionally, LP implements a number of credit processes as shown in the figure below.
+
+Granting 
+Engagement
+renewal
+Change
+Loss
+Portfolio
+management
+The granting process where the loan applications are handled
+Re-assessment of the customers engagement
+Change of terms for existing
+loan and credit accounts
+Loss handling for existing loan,credit
+and gurantee accounts
+All data is uploaded to dHub. The customers can access data from dHub to do portfolio management on their own, or use TE DWH.  LP is not involved.
+
+Figure 1 – Credit processes within LP
+
+
+
+The main process is of course the granting process, which is normally referred to as a "loan origination system", in other words the process where the applications are handled and the resulting accounts/agreements are "born". 
+
+The engagement renewal process is all about re-assesment of the engagement, while the loss process is about handling coming and actual loss.  The change process handles all changes in the loan and credit account terms.
+
+
+
+In addition to the main credit processes, Loan Process delivers clients to maintain and follow up different kinds of administrative and customer data related to the credit process domain. The figure below gives an overview of these clients. All new clients such as ESG and FIA have their own Admin clients and are truly standalone.
+
+The older clients still rely on the centralised Admin client. 
+
+Collateral, even though it's part of loan processing,  is a Core system. In the future more collateral functionality will be migrated from Loan Process to Collateral system.
+
+SSL is the self service lending application which is very closely integreted with LP through the ECP Services.
+
+  Relevant clients outside Loan Process, but within Loan Processing
+  Loan Process clients
+Accounting
+client
+LP Admin client
+Company Group/ Customer Group
+client
+Covenants
+ client
+ESG client
+ESG admin
+FIA client
+FIA admin
+Creditmeeting
+ client
+Collateral client
+SSL client
+Policy Client/Admin
+Liquidity Client/Admin
+
+Figure 2 – Related clients (The Policy and Liquidity clients are all about administration and calculations so in between clients and admin in a way,  Notice also that the four clients to the rigth all have LP Amin as admin client, making them tight connected with LP)
+
+
+
+ESG	The ESG Client handles stand alone ESG analysis.  LP is lightly integrated (fetch the report, and use some of the main information from the analysis)
+FIA	The FIA Client handles stand alone and case based economic analysis.  LP is closely intgrated through the liquidity DB which is part of the FIA eco system
+Accounting	The Accounting Client handles all public and internal balance sheets of all relevant BM customers (all customers related to a LP case).  LP fetch all balance sheet information from this register
+Company Group	The Company Group functionality is on the sanitation list.  It is in it's simplest form a hiarchy of company relations (ownership etc.)
+Customer Group	The Customer Group is a group of customers which has some kind of relationsship (mostly economic).  This group has replaced the more archaic Company Group.  LP fetch customer group information from this register
+Covenants	The covenants register handles covenants and agreement terms.  LP fetch existing covenants from this register
+Credit Meeting	This client handles the cases which is to be decided in a credit meeting.  
+Table 3 – Related clients
+
+
+
+2.2 Conceptual overview
+The overall architectural view of the LP eco system is shown in figure 2.3.  The intent  in this section is to show the layers, the overall fabrix of the system, not the details.  The details are described in  chapter 6.1. 
+
+
+
+LP
+Client Layer
+SSL
+JSP
+WorkFlow
+Processing Layer
+Security
+ECP Services
+Service Layer
+Composite Domain Components
+ Domain Components
+Business Layer
+Admin
+Internal Integrations
+Third Party Integrations
+Bank Specific Integrations
+Integration Layer 
+
+Figure 3 – Overall architectural view
+
+
+
+
+
+Client Layer	
+The client layer is either the LP application (Office channel) or SSL (Self service channel). 
+
+The latter has of course only a fraction of the functionality, and almost all processes ends up in LP (through the ECP Services).   
+
+Chrome and Egde is the supported browsers as of now.
+
+Processing Layer	
+The Processing layer constitues the presentation logic which produce the end HTML content in the browser. 
+
+The processing layer is supported by the WorkFlow Engine (early on process flow engine), which you can read more about here: Workflow Engine
+
+The presentation framework technology is JSP, which you can read more about here:  https://www.geeksforgeeks.org/introduction-to-jsp/
+
+Service Layer	
+ECP Services covers the main functionality in LP.  The purpose of these services is to make the self service lending and other client able to create and update an LP case. 
+
+Most of the services are not consumed internally by LP though, but the ultimate goal is to increase internal use of these services. 
+
+The servises are built on top of the composite domain components and the domain components.
+
+Business Layer	
+The composite domain components is mainly built on top of other domain components which share related functionality. 
+
+The domain component are restricted to functionality within one and only one domain
+
+Integration Layer	
+Internal integrations is integation to TE internal systems
+
+Third Party integration is integrations to external systems
+
+Bank specific integrations is integrations to bank internal systems
+
+
+
+An oveview of the integrations can be found here:  List of integrations (Loan Process)
+
+Admin	
+The LP Administration which is a stand alone client
+
+Security	
+SA security
+
+
+
+More about the functional architecture in Loan Processing can be found here: Loan & Financing Functional Architecture
+
+2.3 Integrations and sub-systems
+Loan Processs contains a high number of integrations with both third parties, bank specific systems and internal systems.  Furthermore, the LP eco systems consist of a number of sub systems (clients) which is integrated with LP  with varying degrees of proximity.
+
+
+
+
+
+Figure 4 Integrations,clients and systems in the LP eco system
+
+
+
+Collateral	Internal	
+Collateral is the repository for collateral information in Loan Processing (and in TE in general, and is thus considered to be a core system).  
+
+The Collateral System offers a centralized, coherent view of the bank’s business with regards to collaterals. 
+
+There is one single repository for all collateral data, providing all the functionality needed to manage the often-complex relationships between customers, loans, pledges and collaterals.
+
+The system manages collaterals during each phase of the credit lifecycle, from initial evaluation through to release. 
+
+Read more about the collateral system here: Collateral (Depot)
+
+Integration:
+
+Client: No integration between the Collateral client and LP
+
+Services:  LP consumes most of the collateral services
+
+Policy	Internal	
+The policy client is an administration client used to set up both system defined and bank defined policy rules.  
+
+The policy system has an inbuilt rule engine, and a champion/challenger-based evaluation process.  
+
+The system is 100% stand alone, ands can thus be used (and are used) by other internal and external consumers . 
+
+Read more about the Policy system here: Policy
+
+Integration:
+
+Client: No integration between the Policy client and LP
+
+Services:  LP consumes the policy services
+
+ESG	Internal	
+The Environmental, Social and Governance-client is the sustainability system in TE.  
+
+The ESG client is 100% stand alone and can by definition be used also by third parties which is not banks (with some adjustments) . 
+
+Integration:
+
+Client: No integration between the ESG client and LP
+
+Services:  LP consumes ESG services
+
+FIA	Internal	
+The financial analysis client for PM customers (integrates to LP through the Economy PM services).  Read more about the FIA system here: FIA - Financial Advisory
+
+Integration:
+
+Client: LP has implemented "jump" to the FIA client, which means a FIA Analyses is automatically created related to the liquidity analyse (Economy PM) in the case.  Furthermore, the client will be activated
+
+Services:  LP doesn't consume FIA services directly, but indirectly by means of the "jump"
+
+Economy PM	Internal	
+The liquidity calculation services (and administration client). Read more about the Economy PM system here:  Economy
+
+Integration:
+
+Client: No integration between the Economy PM administration client and LP
+
+Services:  LP consumes Liquidity services
+
+SSL	Internal	
+Self Service Lending handles self service loan applications for private customers. It supports fully automated applications for mortgage loans, consumer loans and credit cards.
+
+All applications are saved to Loan Process and can be viewed and edited there.
+
+The system offers both a complete solution that includes a responsive frontend client, and a high level API for customers that want to create the client themselves.
+
+Integration:
+
+Client: No integration between the SSL client client and LP
+
+Services:  SSL consumes a large number of ECP services
+
+LP Administration	Internal	
+The administration client for LP functional setup.
+
+Integration:
+
+Client: No integration between the LP administration client and LP
+
+Services:  LP consumes LP administration services and also fetch information by direct DB integration (LP is configured with the LP Administration DB datasource)
+
+Covenant	Internal	
+The covenant and conditions client.  
+
+Integration:
+
+Client: No integration between the Covenant client and LP
+
+Services:  LP has direct DB integration (The Covenant DB datamodell is part of the ECP DB)
+
+Accounting/BalanceSheet	Internal	
+The balancesheet and account plan client for BM customers 
+
+Client: No integration between the Accounting client and LP
+
+Services:  LP has direct DB integration (The Accounting DB datamodell is part of the ECP DB)
+
+Credit Meeting	Internal	
+This client handles credit meeting functionality where given set of cases is processed/decided within a meeting context
+
+Integration:
+
+Client: No integration between the Credit Meeeting client and LP
+
+Services:  LP has direct DB integration (The Credit Meeeting DB datamodell is part of the ECP DB)
+
+Customer Group	Internal	
+This client contains both the Company functionality, which is a relational model for company structures,
+
+and the Company Customer Group functionality which are a looser coupled model of relationships between companies and persons.  
+
+The latter is preferred by most banks.  .  , but LP uses direct DB integration)
+
+Integration:
+
+Client: No integration between the Customer Group client and LP
+
+Services:  LP has direct DB integration (The Customer Group DB datamodell is part of the ECP DB).  Services also exist but they are not consumed by LP
+
+Consent	Internal	
+The consent client handles the communication between the end user, AltInn and the system (LP,SSL etc.), which make it possible to retrieve the salary and tax information for the customer from Skatteetaten.
+
+Read more about this solution here:  Samtykkebasert Lånesøknad
+
+Integration:
+
+Client: No integration between the Consent client and LP
+
+Services:  The consent service is consumed by LP
+
+dHUB	Internal	
+The TE data hub.   Daily extract for from the LP DB.  Read more about dHUB here:  dHub
+
+Integration:
+
+File:  A file is created based on the contents in the ECP DB
+
+Extracts	Internal	
+Loan Processing is all about beeing online with the core systems, but some exceptions exists. 
+
+In some situations the loan processing systems need daily or monthly file extracts from the core systems for customer information, accounts, loss innformation, arrears information etc.  
+
+These files are transferred from the core system to Loan Processing after beeing created and processed in the legacy 'kopidata' or ASC, which is a new system developed resently.
+
+An overview of some of these files can be found here:  Uttrekk fra kjerne - Loan Process
+
+Integration:
+
+File:  Files are received from the core system on a daily or monthly basis, and the content is updating clients, and stored in CPExtract... tables, for instance CPExtractAccount for account information  
+
+ACT	Internal	
+The activity client.  Read more about the activity system here:  Activity System
+
+Integration:
+
+Client: The Activity client has "jump" functionality to LP
+
+Services:  LP consumes a number of the activity services
+
+SCS	Internal	
+The Sales and Customer client.  Read more about SCS here:  Sales And Customer Service
+
+Integration:
+
+Client: The SCS client has "jump" functionality to LP
+
+Services:  No services are consumed either way
+
+Self Service	Bank Spesific	
+Some banks/bank groups has developed their own Self Service solutions (similiar to SSL).  In order to be able do that, an extensive use of CoreWS and ECPS/SSL services is needed.
+
+Integration:
+
+Services: ECPS services is consumed by the bank spesific self service solutions
+
+Advisory	Bank Spesific	
+Some banks/bank groups has developed their own Advisory solutions (similiar to FIA).  In order to be able do that, an extensive use of CoreWS and ECPS/SSL services is needed.
+
+Integration:
+
+Services: ECPS services is consumed by the bank spesific advisory solutions
+
+CRM	Bank Spesific	
+Some banks/bank groups has CRM systems or other systems mimic SCS.  Some of them has functionality to start cases in LP by means of ECPS services, other starts LP cases by means of URL jumps (the same way SCS and ACT do)
+
+Integration:
+
+Client:  "jump" functionality to LP
+
+Services:  ECPS services sto create LP case
+
+RPM	Third Party	
+RPM- Rådgiver PM, is a STACC product, which enables the bank to run economic advisory for retail customers.
+
+Integration:
+
+Client:  "jump" functionality from LP (which includes som basic information needed to run the advisory analysis in the client)
+
+Services:  LP consumes RPM services for analysis result and analysis report
+
+Archive	Internal	
+Signed documents must be kept in the realm of the 'Total arkivet', more spesific a part called SDO Archive.  All signing systems (both TE eSign and bank spesific eSign solutions) must store the signed documents in this archive.  Read more about eSign (with the archive integration) here: eSignering
+
+Integration:
+
+Services:  LP consumes archive services to retrieve SDO documents
+
+SA	Internal	
+Secure Access is the unit in TE which has responsibility to provide protocol security to clients (URL jumps) and services (each call).  Loan Processing uses mainly the legacy SO token as security provider, but some clients has implemented the new IDP solution.
+
+Read more here:
+
+Secure Access (SABLa) - Current solution
+
+Integration with SA - Secure Access
+
+Integration:
+
+Services:  LP consumes SA services for generation of SO and validation of SO
+
+EAM/Authorization	Internal	
+EAM is the autorization system in TE.  All authorizations and licences, are administered in the EAM client.  Read more about EAM here: EAM
+
+Integration:
+
+Services:  LP consumes EAM services for authorization and licensing
+
+Payment	Internal	
+All disbursements are made by means (either directly from LP or via the core system) of the TE Payment solution.  LP has of now integration to Payment Classic, but Payment renewal integration will be implemented for all new core systems like DM and cLA,and as such the Payment classic integration is continuously sanititized.  read more about this system here: Payments and here: Payment & Cash Management
+
+Integration:
+
+Services:  LP consumes Payment services in order to be able to disburse
+
+Gjeldsregisteret TE	Internal	
+This is TE's own gjeldsregister (debt register).  The debt register holds as of now only unsecured loans and credits, but will most likely in the future be extedended with secured loans as well.  Read more about the debt register here: Automatisk innhenting av gjeldsinformasjon (in progress)
+
+Integration:
+
+Services:  LP consumes debt register services through DDS
+
+eSign TE	Internal	
+TietoEvry signing solution (eSign) is a set of applications that provide services related to digital signing.  Read more here: Electronic Signing - Technical documentation, and here:  eSignering - Loan Process
+
+Integration:
+
+Services:  LP consumes eSign services,and in some configurations eSign consumes ECPS services (call back)
+
+DM	Internal	
+Deposit Management, also called Nx Core or CBS, is the new deposit system which is to replace the classic core systems RK and VR.
+
+Integration:
+
+Services:  LP consumes DM services
+
+ACE	Internal	
+ACE is the credit card ledger.  Read more about it here:  Ace - Accounts & Cards Evolution
+
+Integration:
+
+Services:  LP consumes ACE services
+
+CAS	Internal	
+CAS is the credit card administration.  Read more about it here:  CAS Core
+
+Integration:
+
+Services:  LP consumes CAS services
+
+SLS	Internal	
+SLS is the Specialised Lending Solution dealing with currency loans and syndications.  Read more about it here: Specialised Lending Solution (SLS)
+
+Integration:
+
+Services:  LP consumes SLS services
+
+KYC	Internal	
+KYC is the Know Your Customer system in TE.  Read more about it here: AML KYC QA
+
+Integration:
+
+Services:  LP consumes KYC services
+
+ILO	Internal	
+Inspection logging or logs (ILO) are part of security audit process that contains detailed information such as instituion id, customer id, account id, source, system name, user id, accessed functionality, date and timestamp, and a description for all relavant user interaction in a system/application.  Read more about it here:  Inspection Logging (Innsynslogging - ILO) and ILO in Loan Process:  ECP ILO logging  
+
+Integration:
+
+File:  LP produces an ILO file which is sent to the ILO system
+
+cLA	Internal	
+cLA is the Credit Loan Administration, which is a core ledger system for primarily loans.  cLA was not a part of BAAP originally.  See the SAD for the BAAP integration here:  DELFI project: cLA integration with BaaP
+
+Integration:
+
+Services:  LP consumes cLA services
+
+CashPool	Internal	
+Cash Pool is corporate product that replaces KKS. The aim is to provide a service that (for one customer) brings balances from different accounts together in a net value that will be used for interest calculations. The main purpose for the customer is to achieve interest netting and better utilization of available liquidity.  Read more about it here: Cash Pool Server - CPLS     
+
+CoreWS	Internal	
+Core WS is the integration layer for the TE FS Core systems. CoreWs:Gen2 is the umbrella that the various Cobol core systems offer a java based service interface for the native Cobol services they develop. In principle CoreWs:Gen2 does not own any services, but offer these services on behalf of the core systems.  Read more about it here:  CoreWs:Gen2
+
+Integration:
+
+Services:  LP consumes CoreWS services
+
+Document	Internal	
+The document system produces and stores all documents (letters, attachments etc) in the Loan & Financing domain (with a few minor exceptions).  
+
+It is also used by other internal and external consumers.  Administration of the document system is in the LP Administration module . 
+
+Read more about this system here:  Document Service. 
+
+The document domain also covers functionality related to eSign and eRegistration ++.  This functionality is covered in the sub domain eLoan, which you can read more about here : eLoan
+
+Integration:
+
+Services:  LP consumes Document services
+
+Attachment	Internal	
+The document attachment solution is a part of the document domain in loan processing.  The document attachment register handles all kinds of attachments added by end user, and attachment created by the system (credit reports etc.).  Before the document attachemnt register was made, all such attachment was stored in the dedicated fileserver.  Still a huge amount of attachments reside there, and there is a an ongoing migration program from the file server to the document register.   Read more about it here. DOCSAttachment
+
+Integration:
+
+Services:  LP consumes Document Attachment services
+
+Corporate Signatories	Internal	
+The purpose of this service is to make it easier for the bank to select which signatories in a Loan Process case who has to sign a given document on behalf of an organization (Before implementation of this service the bank would first have to fetch a pdf called  a CorporateCertificate from Loan Process (or external sources) and manually read and interpret the information on this certificate in order to choose who has to sign the documents.  However, after the implementation of this service and after this service has been integrated with Loan Process this will in most cases no longer be necessary. Instead they choose among one or more valid SignatureCombinations that are returned from this service).  In other words, this is making the process of selecting who can sign in BM cases more automatized and can potential save each bank a lot of time.  Read more here:  ecp-corporate-signatories-ws-dist
+
+Integration:
+
+Services:  LP consumes the corporate signatory service
+
+Organization	Internal	
+The organization services covers the functionality i iHub Org, which deals with bank offices, bank users and profit centers.  Read more here:  iHub Organisation: Software Architecture Document
+
+Integration:
+
+Services:  LP consumes the organization services
+
+IR	Internal	
+The Incident Report system in Loan Processing, make it possible to monitor the errors ands warnings which occurs in the applications, batches  and services.  The IR system also have a client where the incident in the incident register, is reported.
+
+Integration:
+
+Services:  LP consumes the IR service
+
+SMS	Internal	
+The SMS system is responsible to send SMS'es in the correct format to the end user.
+
+Integration:
+
+Services:  LP consumes the SMS service
+
+EDV	Third Party	
+EDV- Eiendomsverdi  (A register of  private properties width value estimates).  The integration is implemented by means of DDS.  Read more about the DDS - EDV  integration here: https://www.infotorg.no/tjenester/eiendomsverdi
+
+Integration:
+
+Services:  LP consumes the EDV services through DDS
+
+EDR	Third Party	
+The property register provides information on all registered information from the Land Registry and Borett, as well as technical information from the Land Register. The property register covers all properties and condominium shares in Norway. The register is updated in real-time in line with the registration with the Property Registration Authority.   The integration is implemented by means of DDS.  Read more about the DDS - EDR  integration here: https://www.infotorg.no/leveranse/integrasjon-mot-eiendomsregisteret
+
+Integration:
+
+Services:  LP consumes the EDR services through DDS
+
+Brønnøysund	Third Party	
+In Loan Processing context, the far most important aspect of the registers in Brønnøysund - https://www.brreg.no/ is the e - Registration functionality for vehicles etc.  Brønnøysund is most known for the company register, and that is also information LP needs ,and indeed there is a solution to get and handle it - CIR, but most commonly that kind of information is reported via DDS.  Read more about the Brønnøysund integration here : eTinglysing Brønnøysund
+
+Integration:
+
+Services:  LP consumes the Brønnøysund services through DDS
+
+Kartverket	Third Party	
+The main integration loan processing has with kartverket is the electronic registration (land registration) of real estate.  Read more here:  https://www.kartverket.no/eiendom/elektronisk-tinglysing
+
+Integration:
+
+Services:  LP consumes the kartverket services through DDS
+
+Adobe Livecycle	Third Party	
+For organizations that want to automate form data capture and processing, Adobe® LiveCycle Designer software offers a graphical design tool to create forms that combine high-fidelity presentation with XML data handling. Using Adobe LiveCycle Designer, form authors can quickly create secure, intelligent electronic forms that can be deployed as Adobe PDF or HTML documents.  Read more about the product here: https://www.adobe.com/mena_en/products/server/adobedesigner/overview.html.  In loan processing, this tool is used for SPAMA Forms and Letters.  Read more about this in Overview - main applications and components - Document Production and Document Templates Console - Software Architecture Document (SAD)
+
+Integration:
+
+Services:  LP consumes the Adobe Livecycle services in the document domain
+
+Gjeldsregisteret	Third Party	
+This is the external gjeldsregister (debt register).  The debt register holds as of now only unsecured loans and credits, but will most likely in the future be extedended with secured loans as well.  Read more about the debt register here: https://uscore.no/norsk-gjeldsregister?gad_source=1&gclid=CjwKCAiA_5WvBhBAEiwAZtCU79WuXSgjJtsfvEcLVjAql6GqCloLTy3YBlM8oU1rO-tpejFmQLtF2hoCoo4QAvD_BwE
+
+Integration:
+
+Services:  LP consumes debt register services through DDS
+
+Bisnode (Dun & Bradstreet)	Third Party	
+Bisnode is on of two credit information providers in loan processing.  You can read more about it here:  https://www.dnb.com/no/produkter-og-tjenester/risiko-og-kreditt/kredittinformasjon.html
+
+Integration:
+
+Services:  LP consumes Bisnode services through DDS
+
+Experian	Third Party	
+Bisnode is on of two credit information providers in loan processing.  You can read more about it here: https://www.experian.no/#
+
+Integration:
+
+Services:  LP consumes Experian services through DDS
+
+Landbrukets Dataflyt	Third Party	
+LP fetch the balancesheets for the agriculture sector thouth API's in landbrukets dataflyt.  read more about it here: https://www.landbruketsdataflyt.com/
+
+Integration:
+
+Services:  LP consumes Landbrukets Dataflyt services
+
+Cicero	Third Party	
+ The Cicero economic/liquidity analyzes tool was a competitor to the other welol known economic/liquidity analyzes tool - RPM (STACC).  This solution has been replaced by the internal economic/liquidity analyzes tool in Loan Processing - FIA
+
+Integration:
+
+Services:  LP consumes Cicero services
+
+eSign	Bank Spesific	
+Bank spesific signing solution (eSign) is a set of applications that provide services related to digital signing.  Read more here: eLoan and its interactions with others#Anoverall,holisticapproachtoeLoan amd Flyter og systemskisser
+
+Integration:
+
+Services:  LP consumes bank spesific eSign services,and in some configurations bank spesific eSign solutions consumes ECPS services (call back)
+
+Score	Bank Spesific	
+Most banks/bank groups have bank spesific score cards, and the score card implementation is most commonly realized in the bank, or in score card provider systems like SAS.
+
+Integration:
+
+Services:  LP consumes bank spesific score services
+
+Price	Bank Spesific	
+Some banks/bank groups have bank spesific price mechanisms (like risk price - RORAC), and the price calculation implementation is most commonly realized in the bank.
+
+Integration:
+
+Services:  LP consumes bank spesific price services
+
+LGD	Bank Spesific	
+Some banks/bank groups have bank spesific LGD calculations, and the calculation implementation is most commonly realized in the bank.
+
+Integration:
+
+Services:  LP consumes bank spesific LGD services
+
+Liquidity	Bank Spesific	
+Some banks/bank groups have bank spesific Liquidity calculations, and the calculation implementation is most commonly realized in the bank.
+
+Integration:
+
+Services:  LP consumes bank spesific Liquidity services
+
+ 
+
+Key Information	Bank Spesific	
+Some banks/bank groups have bank spesific registers for key information like arrears,loss, etc. 
+
+Integration:
+
+Services:  LP consumes bank spesific Key information services
+
+Insurance	Bank Spesific	
+Some banks/bank groups have bank spesific insurance integration
+
+Integration:
+
+Services:  LP consumes bank spesific insurance service
+
+Skatteetaten	Third Party	
+Skatteetaten provides the customers payslip and tax information
+
+ Integration:
+
+Services:  LP consumes the indirectly the Skatteetaten services for payslip and tax information, through the consent solution
+
+EVR	Third Party	
+EVR is a Statens Vegvesen integration to fetch information about vehichles.
+
+Integration:
+
+Services:  LP consumes the Statens Vegvesen services for vehichle information
+
+
+
+2.3.1 Datamodel and interconnectivity
+
+
+
+
+
+2.4 C4 Model
+The C4 model is an "abstraction-first" approach to diaramming software architecture, based upon abstractions that reflect how software architects and developers think about and build software. 
+
+For LP, such a model is in progress, and you can find it here: Loan Process - C4 model
+
+3 Architectural Representation
+The architecture of the System is represented in a number of different architectural views, each representing the architecture from a specific perspective.
+
+Use-case view: This view lists important and architecturally significant use cases.  The use cases are selected because they together span the expected capabilities of the System and therefore drive the architectural decisions.
+
+Logical view: This view describes the architecture’s logical decomposition into subsystems, packages and classes.
+
+Implementation view: This view describes how the logical model maps onto an imple­men­tation architecture, defined in terms of layers, frameworks and component models.
+
+Integration view: This view describes how the System integrates with other FS and non-FS systems. 
+
+Process view: This view presents the System from the perspective of relevant processes, that is, descriptions of batch processes, cross channel processes, business process manage­ment tools, etc., not appropriately covered by other views.
+
+Deployment view: This view describes how components are packaged, configured and mapped onto nodes and networks in the physical architecture.
+
+Data view: This view presents the structure of databases used by the System.
+
+Security view: This view describes the different mechanisms involved in providing the overall security solution.
+
+Size and performance view: This view describes the major dimensioning characteristics of the software that impact the architecture, as well as the target performance constraints.
+
+
+
+4 Architectural Goals and Constraints
+This section describes the software requirements and objectives that have some significant impact on the architecture. It also captures the special constraints that may apply.
+
+The architecture for the Loan Process application is the foundation for the Loan Processing architecture, and will be enhanced / developed to support the new requirements and goals as outlined below. 
+
+
+
+The architecture shall use existing and widely accepted standards.
+The GUI for the solution shall conform to TE FS standard GUI 
+The system should, as far as possible, reuse existing components and services. Components and services developed as part of the project should be designed with reuse in mind.
+The system shall only be dependent on defined services interfaces to external systems, not how the services are implemented. This means that backend systems / product suppliers can be exchanged without affecting the system.
+Dependency between components and systems in the total suite should be minimized. The system should be component-based with distinct service interfaces and loose coupling
+The architecture shall have a clear division into layers that handles presentation, business logic and data respectively.
+The solutions shall make it possible to implement packaging of services/products. In order to obtain this, all business logic should be implemented in dedicated common logic packages / components. 
+When building new common components, they shall be built according to TE FS architecture principles which mean that business logic shall be offered as web services.
+The architecture of the solution must support multi-bank and multi-language, preferably without requiring multiple instances of the application.
+No URL-link should be sent by e-mail.
+Robustness and continuity should be an integral part of the solution.
+Scalability - the ability to handle increased volumes should be an integral part of the solution.
+Data and information should be seen as a common business resource that has to be managed
+data is a common resource and must be reusable
+information should be captured at the source and made available to all interested parties
+information should only be stored once (information master)
+data should be protected against unauthorised access, change or deletion
+A common view of the customer across the enterprise and across channels
+All development should be based on a common information model
+The services / interfaces offered externally should be based on this model
+The system shall be compatible with FINODS products and versions.
+The application must be developed with portability in mind and not use vendor specific features and functionality, i.e. utilize standard API's and functions whenever possible.
+Functional and architectural components from the Loan Process application should be reused / enhanced in the Loan Process application, e.g.
+Workflow
+Data model(s)
+Admin framework
+Java /domain components and composite components
+The Loan Process application should use DAO manager for vital integrations.
+Development Principles are described in the Design and Programming Guideline, reference [4]. See also chapters "6.3.1 Best Practises" and "6.3.2 Design Patterns".
+
+
+5 Use-case View
+This section describes scenarios or Use Cases which cover significant parts of the architecture (which contain many architectural elements) or which illustrate a particular, difficult point about the architecture. These are elaborated on in chapter 6
+
+The use case model is a model for the system’s functions and provides an overview of how operators and use cases interact. It also serves as the "contract" between customer and developer, thus stating the applications functionality.
+
+The architecturally significant use cases and packages are:
+
+Start credit processes
+Document domain
+Score
+Economy PM
+The UC for Engagement renewal, Change and Loss processes does not introduce any new significant architecture elements in Loan Process.
+
+5.1 Architecturally Significant Use Cases
+5.1.1 Start credit process
+The case manager / credit officer, can start Loan Process from many "entry points" (some of which are third party entry points).
+
+SCS
+ACT
+EEM
+CRM
+Bank developed / 3rd party Customer Module (if applicable) /CRM
+Common for  all start of new cases or viewing of existing cases, is that it's realized by means of SO URL jump, which again means that LP can be jumped to from anywhere as long as the entry point have an SA integration and thus is capable of creating an SO
+
+5.1.2 Document Domain
+This chapter gives a short overview over UC that cover the Loan Process document domain.
+
+The Loan Process document domain covers following areas:
+
+Loan Process case-documents
+Loan Process decision report
+Electronic signature (eSign) with Norwegian BankId signature method
+Electronic land registration
+
+
+
+
+Figure 5:  Overview of the document UC's
+
+
+
+UC 27.32 describes the Document administration client and the parameters to configure for different document types. The actor Admin user starts the administrationclient for instance to link product documents with actual products which are defined in  iHub Product.
+
+BER 15.1 describes the business-logic how to generate the relevant case-documents like Spama documents and letters for the given customer(s), product(s) and collateral(s).
+
+UC 30.1 describes the document production step that the actor Loan Process user could start as a part of the Loan Process production process. This UC has references to UC 27.32 and BER 15.1 document.
+
+After the case-documents are generated, the actor Loan Process user may choose to show and print repayment-plan from its own browser window, or print or produce e-documents (.pdf) through the web service Spama document production and Letter production by using Adobe LiveCycle.
+
+Loan Process letters could be stored into the actor Loan Process file-archive manually by the actor Loan Process user.
+
+UC40.1 Letter production describes available letter-groups and fields.
+
+UC 41.1 Case decision-report describes the content in the case decision-report. Adobe LiveCycle is used for mapping report data into the template. The case decision-report and belonging attachments are stored into the Loan Process file-archive.
+
+UC eSign describes changes in the Loan Process document production to support electronic signature of Loan Process case-documents like Spama documents and letters. These documents will be electronic eSigned by the eSign engine. The eSigned documents (SDO) are stored in the SDO archive. The actor Loan Process user could pick up and watch these documents directly in the Loan Process document production step.
+
+UC electronic land-registration describes changes in the different steps in Loan Process to support this new functionality. This use case includes changes in Loan Process document production and production of electronic mortgage-documents at BID XML format.
+
+This document is produces by the DocumentWS that invokes the system actors IM and NE LandRegistrationWS.
+
+This document must be electronic eSigned and stored in the SDO archive before it could be sent to electronic land-registration through the system actors IM and NE LandRegistrationWS.
+
+
+
+5.1.3 Score
+This chapter gives a short overview over the common UC that usually cover the score step.
+
+The scorecards are usual specific for each bank. The actual Score use-cases are of this reason different from bank to bank. The UC names for each bank are this described in the separate SAD attachment for each bank.
+
+The score step in Loan Process usually covers both score for personal, small firms and corporate customers.
+
+
+
+
+
+Figure 6 - Score related Use Cases
+
+
+
+UC PM & SMB PM describes the score step which the actor Loan Process user starts in the Loan Process for personal or small firm customers.
+
+UC BM describes the score step which the actor Loan Process user starts in the Loan Process for corporate customers.
+
+
+
+The actor score card PM calculates the score results for Loan Process for personal customers. The score card BM calculates the score results for Loan Process corporate customers. Small companies (SMB) could be treated both as PM or BM depending on the various banks' preferences.
+
+5.1.4 Economy PM
+TODO
+
+6 Logical View
+This section contains a description of the architecture’s logical perspective, i.e. It describes the most important classes, their organisation, service packs and subsystems and the organisation of these subsystems in layers.
+
+It also describes the most important “Use Case Realizations”, for example dynamic aspects of the architecture.  Class diagrams illustrate the relationship between the architecturally significant classes, subsystems, packs and layers.
+
+6.1 Overview
+
+
+
+
+Figure 7 - Overview of the conceptial layers in LP
+
+
+
+The conceptial overview above ( same as figure 3 in chapter 2.2) divides the architecture into distinct layers.  The layers has already been described on a high level in chapther 2.2, but will be described in more detaial below.
+
+
+
+6.1.1 Client Layer
+This is the layer in which all interaction with the end-user takes place. The client layer will for the office channel be a browser run locally.   
+
+The self service aspect of the client layer will not be described here, that's part of the SSL SAD, and furthermore, the self service clients doesn't interact with all parts of the architecture (skip the processing layer naturally), and is thus somewhat out of scope.
+
+
+
+6.1.2 Processing Layer
+The processing layer, which also can be called the presentation layer, produce the end HTML content in the browser.
+
+
+
+This layer should:
+
+Process requests from web client in terms of request – response.
+Interpret the user’s wishes (parameters and variables sent to the system).
+Connect the user’s wishes with the functionality implemented in the Business layer.
+Receive the result from the Business layer as ValueObjects.
+Send on the request to the relevant JSP page with the ValueObject.
+Send a response from the JSP page to the web client.
+
+
+This layer uses JSP technology to present the pages. For this a “taglib” is used which contains the functionality for handling:
+
+Values given in input fields
+Presentation of values
+Presentation of graphs
+Presentation of lists of values
+This layer also controls the interaction between various components in the system. The processes in the application are composed / made up of independent process step. (e.g. scoring, collateral, price etc.).
+
+The processes are handled by the WorkFlow engine. The WorkFlow engine is also responsible for the page flow within the process steps.
+
+The WorkFlow is configured by:
+
+Which process step that is active in a given process.
+The order of the process step.
+Which pages that are active for a given process step.
+The rules for when a process step is to be invalidated
+The order of the pages within a process step.
+Which fields that shall be displayed for a given page.
+
+
+Read more about the work flow here:  Workflow Engine
+
+6.1.3 Service Layer
+The services which the service layer constitutes, was not orginally a part of the design (ECP was designed in the early parts of the 2000's).  It's thus a later add on, which was vital to the emerging self service solutions.  LP in itself does not use all these services though (even though it's a goal), but the services nevertheless covers all the basic functionality in LP
+
+The servises are esentially built on top of the composite domain components and the domain components.
+
+6.1.4 Business Layer
+The Business Layer contains the business components for the application. The business components are divided into modules according to the business logic for the financial area. The components can be reused by several others applications.
+
+The basic components was originally designed as EJB's (actually before LP as it is now was designed), but that technology was naturally abonded at a very early stage, so those and  all other domain components are plain POJO's.  
+
+Exchange of data between the processing layer and the business layer is carried out with the aid of Value Objects.
+
+6.1.5 Integration Layer
+The internal integration architecture is based on Data Access Objects (DAO). The DAO's are responsible for all interaction with the application's back end systems.
+
+The DAO's are distinctly separated from the components which implement the application's business logic.
+
+The objects are encapsulating the logic used to call the different back end systems.
+
+The DAO's can be either DB DAO's (meaning implementing interaction with a database) or Web Service DAO's (meaning implementing services, both internal and external)
+
+6.1.6 Security
+The security is based on established security standards. Authentication and authorisation are handled by separate applications and is not a part of the Loan Process application.
+
+Authentication is handled by SA web services. For seamless transfer between SCS and Loan Process a security token (SO) obtained from Secure Access (SA) is used.
+Authorisation is handled by a separate authorisation application (EAM).
+Authority limit which is a special case of credit authorisation is handled by the Admin application.
+Organizational issues, ie. the properties and values of employees and organizational units within the bank, is handled be iHub Organisation. 
+6.2 Architecturally Significant Design Elements
+What makes something architecturally significant?
+
+Architecturally significant requirements are a subset of the requirements that need to be satisfied before the architecture can be considered "stable". Typically, these are requirements that are technically challenging, technically constraining, or central to the system's purpose.
+
+6.2.1 Package Diagram
+Package diagram is used to simplify complex class diagrams, you can group classes into packages. A package is a collection of logically related UML elements.
+
+
+
+6.2.1.1 The presentation layer
+The presentation package handles requests from client and translating these into business events which are sent forward within the system to the right business component for further processing.
+
+The Presentation layer is responsible for presenting data to the client.
+
+Presentation handles composition of screens, control of screen sequence, security control and communication with underlying layer to get hold of the necessary services.
+
+
+
+6.2.1.2  The business and integration layer
+The Loan Process business and integration layer package structure contains classes to implement the system’s business logic.  Both part of the solution’s processing logic and transaction handling are included within the business logic.
+
+Loan Process uses DAOs to communicate with underlying systems,and the implementaion is either DB DAO's  (like LP's own DB DAO's) or  Web Service DAO's (like Web services for the core system  - CoreWS).
+
+
+
+
+
+Figure 8 Sphere layout showing some of the the domain components used by Loan Process and how they are interconnected
+
+
+
+6.3 Architecturally Significant Design Principles and Mechanisms
+
+
+6.3.1 Best Practices
+The architecture will in this respect be mainly based on the practices and principles from the Loan Process architecture. To ensure the best possible stability, flexibility and monitoring as well as best possible performance the architecture will be focused on the following best practices:
+
+MVC (Model View Control) design pattern.
+Accepted and well proved design patterns (see next section).
+Automated test –methods and -tools.
+The design and development are based on the functional specification and not on technology.
+Run performance tests during parts of the project’s lifetime.
+Monitor memory use and performance. This is described in more detail in the WAD.
+Generate input module from the prototype and make this accessible in workflow.
+Generalise configuration in workflow.
+Common Admin
+Emphasis on internationalisation and multi-bank support.
+6.3.2 Design Patterns
+The solution uses many different design patterns. The most important are listed in the following list:
+
+J2EE pattern.
+Read more about it here :https://www.geeksforgeeks.org/j2ee-design-patterns/
+MVC (Model View Control) design pattern.
+MVC is used to separate the business logic from presentation- and process logic.
+Value Object (VO)
+Value Object, also known as Data Transfer Object, is used to transfer data between the different layers.
+Session Façade.
+Gives a uniform workflow interface to a set of business components.
+Data Access Object (DAO)
+The DAO's are used to separate data access to the different back end systems from the business layer.
+Command pattern
+To achieve high performance the sql statements are collected together and executed in a batch.
+6.3.3 Caching
+The solution is based on stateless session beans and data is fetched from the back end system whenever needed. The case data is cached on the session. The data is validated and persisted to the system database between every page. The workflow engine is responsible for persisting the data.
+
+Some static data that is not specific for a given session, i.e. that is not specific for a customer or a case, are cached in the solution. The cache is used to reduce the number of transaction against the back end system. The data is cached for each bank and are invalidated on a given time or manually.
+
+The cache is implemented on the business layer. For the presentation layer the cached data is select in the same way as all other data.
+
+The following list is some of the information that is cached:
+
+Admin data
+Foreign currency list
+Cooperative housing information
+Zip code/post office
+Municipal number
+Products
+Static bank information
+6.3.4 Logging
+The logging should be based on the logging defined in TE FS Log & Config. The following logs shall exist:
+
+Operating/Application log (ecp_app)
+Performance log (ecp_performance/ecp_performance2)
+Debug log (Only if configured, default of)
+Access log (http_access)
+In addition LP has case logs, which is comprehensice logs for all logged events during a case lifespan.  These logs contains a combination of operation log, performance.log and journal.log
+
+6.3.5 Overall GUI principles & templates
+
+
+6.3.5.1  The Template
+Specific rules apply when it comes to positioning of elements. These elements are the ones that often show up in the application, and the user expects to see in the same place every time.
+
+At the top of every page there will be a menu, with information about which page and process the user is currently on. A navigation toolbox is also located in the top of every page. This area of the page is called "the menu".
+
+Directly below the menu, at the right hand side of the screen, you will find a decision box. This is a standard element that appears on many pages, and should always be located here.
+
+
+
+
+
+Figure 9 The menu, the navigational area and the decision box
+
+
+
+The footer is placed at the bottom of every page. It includes a navigation toolbox similar to the one we find in the menu.
+
+At some pages there may be many icons the user can use as support or tools to accomplish desired actions. In addition to the usual tooltip on each icon, the user should also be presented with a list containing brief explanations for all the icons on the current page. If this list relevant to your page it should be located directly above the footer.
+
+
+
+
+
+Figure 10 The footer
+
+
+
+6.3.5.2  General standards and guidelines
+Some changes have been made to the existing Loan Process GUI standard before this project. The goal of these changes is to make an easier maintainable application and to adhere closer to the overall EVRY FS GUI standard.
+
+First and foremost there has been an overall aim to design the pages with block elements (<div>) and style sheets instead of tables, which was the approach in old CP application. Examples of how to use block elements to determine the look and feel of the pages are described in the Loan Process template.
+
+Specific styles for a sub process will use their own sub-process-CSS (later called sub-CSS). This CSS will be imported after the main-CSS in the head part of the HTML output, and will therefore override settings of those classes already defined in the main-CSS.
+
+The import will use the workflow to determine which sub process the system is in at any given time, so it is important that the sub-CSS is named correctly. 
+
+The name must be defined like this: styledefinitions_XXXXXX.css where XXXXXX is the abbreviation (6 characters) for the sub process. Remember to never use style classes from other files than the current sub-CSS or from the main-CSS!
+
+However, one should try to use the general styles from the main-CSS as much as possible. Try to adjust the pages to use the main-CSS rather than adjusting the CSS (by creating new / own classes in the sub-CSS) to fit the pages. It is easier to make the different pages of CP look like they belong to the same product this way.
+
+
+
+The main-CSS should not be adjusted or appended if it's not evaluated by the person responsible for the main-CSS. Remember that many pages will use the same style classes, and a change could result in many unwanted consequences.
+
+Another change that is made to the GUI standard is how the buttons are produced. Pure images are not used as buttons in CP anymore. The reason for this is the hard maintenance this presents. Styled elements should be used instead  (<input type="button">).
+
+The complete syntax to the buttons can be found in the template. Since these buttons also have some default events (such as onMouseOver), it is recommended to copy the buttons from the template and just change the onClick event and the caption (value) to fit the specific usage.
+
+This will make all the buttons behave the same if it is chosen to add effects at a later time.
+
+
+
+6.3.5.3  User input errors
+If a user forgets to enter information in a field, or enters invalid information a list of errors will be printed in the top of the page. This will be done automatically depending on the errors added in the PostHandler. If the error is bound to a field, this field will be marked with a color.
+
+
+
+Figure 11 Error Handling
+
+6.4 Use-case Realizations
+
+
+6.4.1 Start application
+Each process is started with an URL that contains both the starting JSP of the resp. processes and the parameters required (for instance customer-id and/or case-id). 
+
+These can be invoked from  fo instance SCS or ACT, but in theory form whatever endpoint which is capable of issuing a suitable SO.
+
+
+
+6.4.2 Document domain
+The figures below give a logical overview over the Loan Process document domain. The further description is grouped into following areas.
+
+Loan Process case-documents
+Loan Process eSign
+
+
+
+
+
+
+Figure 12 The document domain
+
+
+
+Loan Process fetch document definitions from a general Document Admin. The Loan Process document-step lists the current case documents, like Spama documents, letters and NE electronic mortgage-document at BID XML format. The document-list is generated based on Document Admin definitions.
+
+Spama documents are produced as read-only e-documents or printed by Adobe LiveCycle
+Letters are only produced as e-documents that could be edited and printed in Adobe Reader.
+NE mortgage-document is as read-only e-document at BID XML format that only could be produced as e-document.
+
+
+Loan Process case decision-report is also regarded to be a case document, but this one is generated in the Loan Process Decision step.
+
+Loan Process case decision-report is produced directly as a .PDF by Adobe LiveCycle.
+Loan Process integrates with Adobe LiveCycle both directly by a common java LiveCycleAPI that is used for the case decision-report and through the following web services in DOCS for Spama documents and letters:
+
+DocumentWS - used for Spama document production
+LetterWS - used for letter production
+
+
+DOCS is a collection of document-orientated business web services. Invoking applications could request for production of one or several documents in the same request by adding input dat for each document that schould be produced by the service.
+
+Loan Process version 3.0 started to integrate DocumentRepostitoryWS for storing and fetching unsigned case-documents like letters, case decision-reports and attachments at the Loan Process document fileserver.
+
+Loan Process version 3.9 started to integrate with IM and NE Land-registration web service operation generate MortgageDocument trough DocumentWS.
+
+
+
+6.4.2.1  Spama documents, customized letters and NE mortgage-document
+Loan Process calls the DocumentGenerator component when the user starts the "Document-production" step. DocumentGenerator read both Document Admin and the case-documentdata from the Admin and Loan Process databases. The case-document data exists only if the Loan Process document-step has been run earlier in the case. The DocumentGenerator returns the actual document-list for the case.
+
+If the user chooses either to produce or print one, several or all e-document, the DocumentGenerator store the case-document information in the Loan Process DB first.
+
+The Loan Process document production starts by the DocumentGenerator component sending actual data for the certain documents to the web service DocumentWS and/or LetterWS. Both web services maps the document-data to the corresponding Adobe LiveCycle template and send a request to Adobe LiveCycle.
+
+Requests of Spama documents production will be sent to Adobe LiveCycle Output by DocumentWS.
+
+Requests of letter production will be sent to Adobe LiveCycle Forms service by LetterWS.
+
+Adobe LiveCycle services Output and Forms produce new documents based on the incoming request. Incoming data are mapped into a copy of the ordered template (containing predefined texts and data-fields). 
+
+ If the desired function is to produce e-document, Adobe LiveCycle return the e-document supplied with case-data in .PDF format.
+
+All e-documents that are produced by Adobe LiveCycle could be printed from Acrobate Reader. Spama documents have in addition a desired print function at the Adobe LiveCycle server which sends the documents direct to the actual printer (if the firewall to the print-server in the bank is open).
+
+Requests of NE mortgage-document production, will be send to IM LandRegistration WS, operation generate MortgageDocument by DocumentWS. This IM WS send the request further to the corresponding NE LandRegistration WS operation, generate MortgageDocument.
+
+NE LandRegistration WS operation, generate MortgageDocument, validates data in the incoming request and produces and return a mortgage-document if no rules are broken.
+
+Letters may contain fields which the user can edit. A letter could be stored at the Loan Process fileserver (star)  as default through DocumentRepostitoryWS. Such letters will only be available in the Loan Process case. When the Loan Process user wants to look at a letter that is already is stored,
+
+Loan Process send a request to the web service DocumentRepositoryWS to fetch the letter from the Loan Process fileserver (star) .
+
+
+
+6.4.2.2  Loan Process case decision-report
+The Loan Process case decision-report is produced in different steps in the Loan Process either automatically or manually
+
+Each time Loan Process collects the actual data and sends it by a request to Adobe LiveCycle Output service, through the common java class LiveCycleAPI. Adobe LiveCycle maps the incoming data with the case decision-report template and return a read-only e-document at .PDF format, supplied with some case-data.
+
+Each time the case decision-report is produced, Loan Process stores the document at the Loan Process fileserver (star)  as default through the DocumentRepostitoryWS. 
+
+The Loan Process user could add attachments into the case decision-report .PDF file and store it as a new file version at the Loan Process fileserver (star)  through DocumentRepostitoryWS.
+
+The Loan Process user could add other documents as case-attachments, these are also stored at the at the Loan Process fileserver as default through DocumentRepostitoryWS.
+
+When a Loan Process user wants to look at a stored case decision-reports or case-attachments in the Loan Process case decision-report overview, Loan Process requests DocumentRepostitory
+
+
+
+(star)  For the purpose of the description above the LP Fileserver has been used, but in reality, the fileserver has been replaced by the DOCAttachment solution (the fileserver is still used for old credit reports and other special documents though).  The SAD for the DOCAttchement system can be found here:  DOCAttachment SAD
+
+
+
+6.4.2.3  Document-eSign
+The figure below gives a logical overview over Loan Process document eSign.
+
+
+
+
+
+Figure 13 eSign
+
+
+
+Loan Process v.3.0 started to integrate the multi-signature eSign engine via the eSign web services and SDO archive.
+
+Loan Process v. 3.8 started to integrate with CoreWS ARCSDocumentRead to fetch SDO’s.
+
+Loan Process standard assume that the end-user uses the eSign portal and BankID for eSigning Loan Process case-documents.
+
+As the sequence diagrams below illustrates, the Loan Process presentation layer classes call the new common component ESignature to send both Spama documents and letters at PDF format, and NE mortgage-document  at BIDXML format to electronic signature. The common component ESignature receives needed information for building an eSingOrder and parses the actual data into an eSignOrder request that is send to the eSign engine web services. In addition Loan Process updates the case activity-status to "eSigneOrder sent" through the Activity web service.
+
+The eSign engine sends information to the end-user where to eSign the Loan Process case-documents, but not by an URL-link to the eSign portal in an e-mail.
+
+ If the user not has eSigned the documents within the time limit(s), the eSign engine sends notification(s) to the end user. The eSign engine cancels the eSignOrder if it expires.
+
+When a case-document has got all electronic signatures, the eSign engine stores the SDO into the SDO archive by using the iAPI web service StoreDocument.
+
+An eSignOrder is completed when all case-documents have got all electronic signatures. Then the eSign engine updates the Loan Process case-activity with a new activity status through ActivityWS.
+
+After a SDO is stored into the SDO archive, the Loan Process user could look at the SDO in the Loan Process document step. Loan Process look up the SDO directly from SDO archive by invoking the CoreWS.ARCSDocumentRead.
+
+In addition to create new eSignOrders, Loan Process support both changing/updating and recalling/cancelling eSignOrders. Loan Process uses the eSignOrderId in these requests. The eSignOrderId is also used when Loan Process ask the eSign engine for the latest status for the eSignOrder. This request is sent each time an Loan Process user start the Loan Process eSign detail page within the Loan Process document production step.
+
+
+
+
+
+Figure 14 Loan Process Document eSign basic flow
+
+
+
+Below follows some sequence diagrams for the communication between Loan Process and  eSign engine.
+
+
+
+Figure 15 Loan Process sending new eSign orders
+
+
+
+
+
+Figure 16 Loan Process ask for status of an eSign order
+
+
+
+
+
+Figure 17 Loan Process update information in an eSign order
+
+
+
+
+
+Figure 18 Loan Process deleting an eSign order
+
+
+
+Further details are described in the Loan Process UCR for Document production, DocumentRepository and eSign in addition to UCR for Document Services.
+
+
+
+6.4.2.4  Direct print (LPD)
+The direct print function that is described in this chapter could be used to print Spama case-documents from Loan Process
+
+In this context the Loan Process client read the users default windows printer-definition by a print-applet and send this information as input to DocumentWS and ReportWS.
+
+These web services send the information further to Adobe LiveCycle which uses the print information in the AIX Line Printer Diamond (LPD) communication when printing documents direct to the actual printer-server and printer in the bank.
+
+Preconditions are that both print-server and printers are predefined at AIX-LPD, pint-servers are defined by print-server name and ip-address, printers by printer-name that also is called print-queue.
+
+More technical information about requirements to print-servers and printers that should be used for this purpose are given in the Loan Process technical delivery document.
+
+
+
+6.4.2.5  Follow-Me print
+Loan Process support follow-Me print as an optional way of printing case-documents. The follow-Me print solution is based on use of Line Printer Remote protocol (LPR print) direct from DOCS. DOCS invoke Adobe LiveCycle to produce documents as usually.
+
+After receiving a document from Adobe LiveCycle, DOCS follow-Me print function sends the document together with a userId direct to the follow me-print server in the bank. Before the follow-Me print option could be used, the follow-Me print server name and ip-address must be defines in DOCS config file.
+
+The sequence diagram below illustrates how DOCS communicates with both Adobe LiveCycle and the follow-Me print server in the bank.
+
+
+
+
+
+Figure 19 Case-document Follow-Me print 
+
+6.4.3 Score
+The figure below gives a logical overview over score solution in Loan Process
+
+
+
+
+
+Figure 20 Score
+
+
+
+TE Score consists of the two main components PolicyCheck and Score.
+
+ Loan Process Score step call the Score components in TE Score as internal composite and domain components. Loan Process uses the composite component ScoreInputBuilder to create the input to the different scorecards. This one provides a common mapping to get the same result independent of the system calling score. 
+
+In ScoreInputBuilder the internal calculation is held on a minimum, calculations are mainly done by the other domain components and the ScoreInputBuilder only do own calculations where this cannot be done by any of the other components.
+
+Banks that have their scorecards implemented in TE Score have the scorecards implemented in separate classes as a part of the Score component.
+
+Banks that have their scorecards implemented in a 3rd path score system, the Score component invokes the external score system by sending requests to the predefined communication protocols. The external 3rd path score system calculates and returns the score-results to Loan Process which shows these in the bank-specific score-result page.
+
+Further details are described in the separate SAD attachment for each bank.
+
+7 Implementation View
+7.1 Layers
+The application is divided into three layers: presentation layer, business layer and integration layer.
+
+7.1.1 Presentation layer
+The presentation layer mainly contains jsp-pages. Each jsp-page has an InitHandler and a PostHandler.
+
+The InitHandler calls the business layer to perform calculations, if needed, before the page is shown. In addition, some preparations are made for the jsp-page.
+
+The PostHandler takes care of the values that the user has entered in the jsp-page. The values are validated, and a helper-class is called that will put the values in corresponding Value Objects. Value Objects are simple classes that are placed on the session; they contain data, but no logic.
+
+A framework component, the WorkflowHandler, directs the process flow according to given rules. After the PostHandling is complete, the WorkflowHandler calculates which page is the next in the process, and calls the InitHandler for this page. The WorkflowHandler also takes care of the status of the case.
+
+7.1.2 Business layer
+The business layer contains value objects,domain classes, business components and composite components. To access these from the presentation layer, help-classes are used: CaseModelManagers and CaseModelHelpers.
+
+There should be one present for each partial process. The CaseModelHelper has mainly one task, and that is to put values from the jsp-page to the value objects, and it has therefore only a number of set-methods.
+
+The CaseModelManager has more advanced tasks, such as taking care of data from the back-end systems, adding value objects, invalidating data and setting default values. All these methods will be explained later in the document.
+
+The CasePersistor is a framework component which, after each page, makes sure changes in the value object structure is stored in the database.
+
+7.1.3 Integration layer
+The integration layer contains Data Access Objects that handle back-end systems.  The DAO layer is desgned with a component strategy which is described in detail in the document Loan Process Design and Programming Guidelines. 
+
+Why the component strategy?  To be able to offer services, both fine granulated and coarse granulated, the integration layer must be implemented with low cross package dependency, which means that a unique component should be largely independent of other components and indeed of the domain model in the application. 
+
+Thus, the integration logic which is possible to pack into single logical structures must be implemented in components.  
+
+7.2 Servlets
+There are three different servlets used in Loan Process:
+
+Workflow servlet
+Image renderer servlet
+Admin servlet
+7.2.1 Workflow servlet
+This is the main servlet in Loan Process. All requests and responses for the normal workflow in Loan Process are sent through this servlet. This servlet is further explained in the WAD document.
+
+7.2.2 Image renderer servlet
+Loan Process use jfreechart to generate some of the charts shown in the workflow. These charts are contained in its own repository. The jsp pages sends requests to an image renderer servlet to be able to show these charts.
+
+7.2.3 Admin servlet
+The application has its own admin console which is run in its own servlet. In this console a system administrator can gain information about database connection, http sessions, logs, memory. For further information refer the WAD document.
+
+7.3 Flow description
+The figure below gives an overview of what is happening when a jsp-page is prepared, shown and handled. The white parts of the picture are the parts that each developer will mainly be working with. The light grey parts are the parts which the architecture team will be responsible for. The dark grey parts are general architecture parts, i.e. parts of the framework.
+
+The components and methods that are mentioned here are those that are important for an understanding of how data is fetched and used through the application, in addition to how the framework components and functional components work together.
+
+The figure shows the process for a jsp-page in the main process, not for admin (the stand-alone administration client that handles the business register and the administration database).
+
+
+
+Figure 21 Flow description
+Figure 21 Flow description
+
+
+
+Figure 21 Flow description
+
+
+
+Before a partial process is started, the framework's WorkflowHandler, "WF” in the picture, calls the doInitialize() method on the CaseModelManager that belongs to that partial process.
+The CaseModelManager's doInitialize()method finds out which data already exist in the case, i.e. which value objects that are placed on the session.
+If data for performing the partial process is missing, the doInitialize()method will fetch them from the business layer by calling the appropriate Proxy which will call the business or composite components.
+The business or composite components will call DAOs on the integration layer.
+The DAOs will get data from back-end systems and create value objects to hold the data.
+The DAO will return value objects to the business or composite components
+The business or composite components will return the data to the Proxy, which will return the data to the
+The doInitialize()method in the CaseModelManager will put the value objects in the value object structure on the session. At the same time the flag isChanged is set to true on the new, or updated, value objects. This is done to show that they have been changed since the last persist to the database.
+Then the WorkflowHandler will make sure the corresponding InitHandler for the jsp-page to be shown first in the flow, is called.
+If there are calculations to be performed before the page is shown, e.g. policy calculations, the InitHandler will call a doExecute()method on the CaseModelManager. The InitHandler will then prepare possible presentation objects, e.g. graphs or text to be shown on the jsp-page.
+The doExecute()method will perform the calculations. All data needed is already fetched in the doInitialize() The result of the calculations is put on the case. The flag isChanged is set to true on the value objects that have been changed.
+The framework makes sure the jsp-page is shown.
+When the user pushes “next” on the page, the framework will call the PostHandler.
+The PostHandler validates input from the page, and calls the CaseModelHelper to put input data on the case.
+The CaseModelHelper updates the case with input from the jsp-page. The flag isChanged is set to true on the value objects that have been changed.
+When the PostHandler is executed, the framework makes sure that the WorkflowHandler is called again.
+The WorkflowHandler makes sure that the CasePersistor is called in order to save changes made in the case.
+The CasePersistor will look for value objects on the case with the flag isChanged = true.
+The CasePersistor calls the appropriate Proxys, which will call the related business or composite components, to save data that has been changed in the case. The CasePersistor will also read the flag isValid on value objects, to decide if the value is stored. Read more aboutthis later in this document
+The business or composite components call DAOs on the integration layer
+The DAOs will store data to the back-end systems
+The WorkflowHandler will check flow rules to decide which jsp-page is next in line to be called, and call the InitHandler for that page.
+
+
+7.4 Architecturally Significant Implementation Elements
+
+
+
+
+
+
+
+
+We call the technical design for handling a page in the page flow a Self Contained Screen. The procedure will be illustrated with this image.
+
+“IH” stands for “InitHandler” and handles any initiation which must be done before the JSP page can be displayed.
+
+“jsp” represents a JavaServer Page (JSP)
+
+“PH” stands for “PostHandler” and handles processing data from the page etc.
+
+
+
+
+
+Workflow handling is illustrated in this image.
+
+The tree structure represents nodes in the configuration tree and ”R” stands for ”Rules”. Workflow handling is explained in more detail later in this document and in great details in the workflow architecture document - WAD
+
+
+
+
+
+
+
+
+The business or composite components
+
+
+
+
+
+
+
+
+
+
+
+
+Data Access Objects (DAO) are used to access various back end systems. DAOs conceal end-specific technology behind a java interface.
+
+
+
+
+
+
+
+
+
+
+
+
+In this document, “The case” means a data structure linked to the session. The case consists of value objects (VO). VOs are java classes which contain data. “The case” means data which belongs to the flow of a case in process.
+
+The case is saved in a database and also represents a java object structure which the application uses. After each call to the server is saved, the database is updated with the changes which have occurred to the java object structure. 
+
+The case is sometimes also referred to as "the model"
+
+
+
+
+
+
+
+
+
+
+The “Admin” framework means administration values such as different threshold values for scoring or policy check. It is linked to the session in the same way as “The Case” and consists of value objects
+
+
+
+
+
+
+
+
+
+The Case Persistor handles saving/reading of the case from databases. It will handle what should be saved and where
+
+
+
+The Admin Persistor framework handles saving/reading of administration values to/from the Loan Process database.
+
+
+7.5 Integrations
+In this chapter the main integrations and components in the solution are discussed.
+
+A summary of the main integrations in Loan Process is shown in tables below, the first one gives overview over systems that integrate with Loan Process and the second one gives an overview over systems that Loan Process integrates.
+
+
+
+
+
+Seamless transition
+
+Seamless transition between start point and Loan Process e.g. ACT  and SCS
+
+SBK/SSL
+
+Is integrated with Loan Process by using ECPS
+
+ECPS
+
+Is integrated with Loan Process by using common domain components that read and update the Loan Process DB by using JDBC call to the Loan Process database.
+
+Table 4 Systems that integrate with Loan Process
+
+
+
+
+
+Loan Process database server
+
+JDBC call to the Loan Process database and Admin database
+
+Loan Process (ECP) services
+
+Invokes ECPS web services to handle for instance electronic land-registration orders
+
+Secure Access
+
+Invokes Secure Access (SA) web services to generate and verify SO
+
+Authorisation module (EAM)
+
+Loan Process use a java client library for EAM integration
+
+Date Driven Services (DDS)
+
+External call to EVRY DDS web services to acquire credit information, payment delinquency, accounts, official collateral information and values
+
+Core
+
+Invokes  iApi (Java api) , Fenris (Java api) or web services
+
+Special Lending System (SLS)
+
+Invokes  SLS web services (for some banks)
+
+Credit card
+
+Invokes Credit cardsystem web services (in several banks)
+
+Activity web service (ACTS)
+
+Invokes the ActivityWS to handle activities.
+
+Document Services (DOCS)
+
+ Invokes web services in Document Services (DOCS) that sends requests to Adobe LiveCycle
+
+Electronic eSign services (ESIS)
+
+Invokes eSign engine web services (ESIS) to handle electronic multi-signature orders
+
+Payment services
+
+Invokes to the payment web services
+
+DWH
+
+1)To Loan Process :  industry data , watchlist.
+
+2) From Loan Process: Data extract to DWH for bank reports
+
+Consultancy module services
+
+Invokes Rådgiver PM web services (in several banks)
+
+Table 5 Systems and web services that Loan Process integrates
+
+
+
+An overview of all web service based integrations can be found here:  List of integrations (Loan Process)
+
+7.5.1 Seamless transition between start point and Loan Process
+This includes two functional tasks: starting a browser with parameters and generating/verification of a security object.  
+
+The basis for integration between SCS and other clients like the thin Loan Process clients is to give the user an experience of seamless transition between the solutions.  From an architectural point of view two areas are addressed:
+
+Security – automatic log on (authentication/authorization as described in chapter 11)
+Start-up of browser – transition from SCS/ other clients to thin Loan Process clients (web client).
+ 
+
+7.5.1.1      Configuration of the URL's
+The start/entry points naturally must have some mechanism to configure the URLs.  This configuration is complicated by the divided production regime.  The production regime is divided into two physical separated environment; PILOT and PRODUCTION.  Thus the configuration must also contain two setups.
+
+The "core" URL for Loan Process, meaning the URL's without the parameters are:
+
+https://XXX.YYY.ZZZ/ecpweb/servlet/com.edb.finance.appl.credit.workflow.controller.WorkflowHandlerServlet?appid=product.bank.creditprocess.main&flowid=HME_TmpLogin_1
+
+or,
+
+https://XXX.YYY.ZZZ/ecpweb/servlet/?appid=product.bank.creditprocess.main&flowid=HME_TmpLogin_1
+
+The latter is preferred (the correct servlet is chosen automatically in Loan Process, thus the servlet class is not necessary to set in the URL).
+
+XXX.YYY.ZZZ will naturally differ in PRODUCTION and PILOT environment.
+
+The technical delivery document of Loan Process contain more exact and detailed information about Loan Process URL
+
+7.5.1.1.1 Configuration of PILOT in EAM
+In EAM there is a special PILOT authorization, which must be assigned to one or more roles the PILOT case managers are related to: Loan Process pilot - Loan Process pilot
+
+7.5.1.1.2 Configuration in SCS
+Each entry point is defined in a menu setup.  For Loan Process the content is:
+
+
+
+LP Eng.gjennomgang
+
+dispatch('https://xxx.yyy.zzz/ecpweb/servlet/&appid=product.bank.creditprocess.main&flowid=HME_TmpLogin_1&logonnetoffice_workflowtype=eng_renewal&ModuleRef=EcpEngRenewal&XisSupport=true&HttpPost=true&SecureObject=true&logonnetoffice_customerid=<customerId>&kundenr=<customerNo>&logonnetoffice_userid=<logonId>')
+
+LP Innvilgelse
+
+dispatch('https://xxx.yyy.zzz/ecpweb/servlet/&appid=product.bank.creditprocess.main&flowid=HME_TmpLogin_1&logonnetoffice_workflowtype=Innvilgelse&ModuleRef=EcpProc&XisSupport=true&HttpPost=true&SecureObject=true&logonnetoffice_customerid=<customerId>&logonnetoffice_userid=<logonId>')
+
+
+
+The value of the ModuleRef parameter in this intermediate URL points to where the value for the XXX.YYY.ZZZ part can be fetched from.
+
+Furthermore, if the case manager is a PILOT user (see the previous chapter), the value of the ModuleRef parameter is modified like this: value = value  + "Pilot"
+
+The resulting value is a key to a configuration table in the DB
+
+7.5.2 Internal Integration within Loan Process clients and processes
+The following table lists the various clients and processes and the required parameters used.
+
+
+
+
+
+Regnskap
+
+(Accounting
+
+so
+
+logonnetoffice_customerid
+
+searchkey****
+
+port
+
+topicid
+
+
+
+**** Not needed when starting from SCS
+
+Handlingsplan
+
+(Action Plan)
+
+so
+
+logonnetoffice_customerid
+
+searchkey****
+
+port
+
+topicid
+
+Konsern/ Selskapsinformasjon
+
+(Company Relations)
+
+so
+
+logonnetoffice_customerid
+
+searchkey****
+
+port
+
+topicid
+
+Covenants
+
+so
+
+logonnetoffice_customerid
+
+searchkey****
+
+port
+
+topicid
+
+
+
+When called internally from credit meeting, the following  parameter is added
+
+rpSource
+
+Innvilgelse / produksjon
+
+(Granting and Procduction Process)
+
+ 
+
+.. or ..
+
+
+
+Engasjementsfornyelse
+
+(Engagement Renewal)
+
+Or
+
+
+
+Endring lån
+
+(Change / Maintenance)
+
+so
+
+logonnetoffice_customerid
+
+logonnetoffice_caseid***
+
+logonnetoffice_workflowtype**
+
+searchkey
+
+port
+
+topicid
+
+
+
+**workflowtype has these valid values:
+
+·        Granting and Procduction Process -> application
+
+·        Engagement Renewal -> eng_renewal
+
+·        Change for maintaintanece
+
+
+
+*** If the case that should be started has been created the logonnetoffice_caseid parameter must be used in order to open the correct case.
+
+If an activity has been created before the case is created  (which for instance is the case for the  system created engagement renewal activities), the logonnetoffice_activityid parameter must be used in order to reuse the existing activity.
+
+Admin
+
+so
+
+Kredittmøte
+
+(Credit Meeting)
+
+so
+
+Table 6 URL parameters to start Loan Process and Loan Process Clients
+
+7.5.3 Integration with Loan Process database server
+JDBC is used from the application server with access across a firewall directly to the Loan Process database. This solution means that it is the application server which takes the initiative to access the database. Fixed usernames are used for all sessions with each database because connection pooling is used on the application server.
+
+Information over the line follows the (Oracle) SQL*Net protocol and SQL expressions are used directly (select, update, insert and delete).
+
+7.5.4 Integration with DDS
+
+
+
+
+Figure 22 DDS Integration (NB! Information Management == DDS, just an earlier naming)
+
+
+
+Loan Process contains a common integration component (ExternalData) which integrates Loan Process with TE DDS. The ExternalData component contains a DAO layer that communicates with the DDS web services.
+
+DDS has web services that support information-collection from both internal DDS databases and external vendors. The Norwegian National Registry (NR/DSF), "Real Estate" register and (ER) are examples of DDS internal databases, but these are not in use for Loan Process.
+
+Loan Process use a common DDS web services to collect external credit-information like payment remarks, tax- and balance-information from vendors like Lindorff, Soliditet and Experian. This DDS web service contains separate operations to collect data for private persons and companies.
+
+When Loan Process fetch credit-information from these vendors, DDS is used as a "proxy" between Loan Process and the credit-information vendors. 
+
+Loan Process use an SOAP web service client to communicate with the DDS credit-information web service InfoKred. This DDS web service has the following two operations:
+
+Krpers01 used for PM-customers
+Krfore01 for BM-customers
+Loan Process invokes these two web services operations in corresponding flow for PM and BM customers.
+
+The data returned from the DDS web service contains sensitive personal information. Therefore the communication is based on SSL to ensure encryption of the data exchange. Digital certificates are also needed in the application that requests DDS. The name and path to these are configured in an Loan Process config-file.
+
+If a system-hang situation occurs within the DDS web service or in the 3.part systems behind the DDS web service the ExternalData integration-timeout will fetch and log this.
+
+Loan Process send the following data to the DDS web service InfoKred:
+
+ORGNR (Organizationno for BM customers) or   FNR (birthno for PM customers)
+DATABASE (value from config-file)
+SAKSREF (bankname value from config-file)
+BRUKERID bankname value from config-file)
+PASSORD
+SYSTEMNAME
+
+
+Loan Process uses the DDS property value web service; Eiendomsverdi3 and the operation hentMarkedverdiVektet to collect external property-value information from the Norwegian vendor “Eiendomsverdi AS”. This DDS web service function is common for private persons and companies.
+
+Loan Process invokes this web service operation for both PM-customers and BM-customers.
+
+Loan Process sends the following data to the DDS web service Eiendomsverdi3:
+
+For real estate
+
+CouncilNumber
+BNr
+SNr
+For leased estate
+
+CouncilNumber
+BNr
+FNr
+SNr
+For housing cooperative
+
+OrganizationNumber
+ShareNumber
+
+
+Loan Process is not directly integrated with the DDS land registration web service Tinglysning. The integrations with the different operations within this web service are handled in DOCS and ECPS.
+
+7.5.5 Integration with Core
+Core in this context is the legacy core systems UL,RK,GA,VR and Trade Finance, in addition to the administration and product  systems like iHub Organisation and iHub Production. 
+
+All these systems has a common platform for services called CoreWS, and thus this platform is the most essential integration point in LP.
+
+Other core system like SLS and Card is not a part of this platform.  Both systems have dedicated services within their own "silo".
+
+Future core systems like Deposit Management (DM, which replaces RK) and cLA (which replaces UL), also have dedicated services within their own "silo".
+
+7.5.6 Document domain integrations
+The figures below illustrate Loan Process document domain integrations. These are described more detailed in the table below the figures.
+
+
+
+
+
+Figure 23 Loan Process case-documents integrations (ECP Dodument File-server has been replaced by DOCSAttachement)
+
+
+
+DOCS and the java LiveCycleAPI component integrates with Adobe LiveCycle by an SOAP.
+
+Additionally DocumentWS in DOCS integrates with DDS LandRegistration WS operation generate MortgageDocument by SOAP.
+
+This DDS WS integrates with NE LandRegistration WS operation, generate MortgageDocument by SOAP.
+
+The table 7 below give an overview over the case document integrations included the case decision-report integrations.
+
+
+
+
+
+
+
+Document Admin
+
+SOAP
+
+CoreWS
+
+iHUB product
+
+Loan Process DocumentGenerator
+
+Java api
+
+admin component
+
+Admin db
+
+Loan Process DocumentGenerator
+
+SOAP
+
+DocumentWS in DOCS
+
+Adobe LiveCycle Output
+
+and
+
+DDS LandRegistration WS, operation generate MortgageDocument which integrates
+
+NE LandRegistration WS operation, generate MortgageDocument.
+
+Loan Process DocumentGenerator
+
+SOAP
+
+LetterWS in DOCS
+
+Adobe LiveCycle Forms
+
+Loan Process DocumentGenerator
+
+SOAP
+
+DocumentRepositoryWS in ECP Services
+
+DOCSAttachement
+
+Loan Process CaseDecisionReport
+
+Java api
+
+LiveCycleAPI component
+
+Adobe LiveCycle Output
+
+Loan Process CaseDecisionReport
+
+SOAP
+
+DocumentRepositoryWS in ECP Services
+
+Loan Process file server
+
+Table 7: Case-document integrations
+
+
+
+
+
+Figure 24 Loan Process -eSign integrations
+
+
+
+The table 8 below gives an overview over the case document eSign integrations.
+
+
+
+Component
+
+Interface
+
+Integrated service
+
+"End point"
+
+Loan Process DocumentGenerator
+
+SOAP
+
+ActivityWS
+
+WLI db
+
+Loan Process Esignature
+
+SOAP
+
+ESISSignRequestCreate
+
+eSign engine
+
+Loan Process Esignature
+
+SOAP
+
+ESISSignOrderStatusRead
+
+eSign engine
+
+Loan Process Esignature
+
+SOAP
+
+ESISSignOrderUpdate
+
+eSign engine
+
+Loan Process Esignature
+
+SOAP
+
+ESISSignOrderDelete
+
+eSign engine
+
+eSign engine
+
+SOAP
+
+StoreDocumentWS at iAPI
+
+SDO Archive
+
+eSign engine
+
+SOAP
+
+ActivityWS
+
+WLI db
+
+Loan Process DocumentGenerator
+
+SOAP
+
+ARCSDocumentRead
+
+SDO Archive
+
+Table 8: Case document eSign integrations
+
+
+
+If a system-hang situation occurs within the DOCS or eSign engine, Loan Process will time-out the requests to these systems because the Loan Process component DocumentGenerator and Esignature has its own time-out parameter that is configured in the component configuration-file. 
+
+The Loan Process case decision-report and the web services in DOCS (DocumentWS,LetterWS and ReportWS) have a common time-out for Adobe Livecycle, this time-out parameter is configured in the configuration-file of the LiveCycleAPI component.
+
+
+
+7.5.7 Integration with Score
+
+
+
+
+Figure 25 Loan Process - Score integration
+
+
+
+TE Score has a J2EE component that collects admin data from the admin database by JDBC.
+
+Loan Process accesses the Score components in TE Score by POJO.
+
+TE Score cover both the composite component ScoreInputBuilder and the Score domain component that contains internal scorecard classes and interface classes that communicate with external score systems for instance SAS Score and StrategyWare.
+
+TE Score communicate directly with “3rd part score system by different communication protocols like MQ and SOAP.
+
+How this is done for each bank is described in the separate SAD attachment for each bank.
+
+If any system-hang situations occur within a 3.part score engines the time-out mechanism within the actual score engine or Loan Process session time-out will end the Loan Process session. 
+
+7.5.8 Integration with payment (disbursement)
+
+
+
+
+
+
+Figure 26 Logical Layers
+
+
+
+
+
+Figure 27 Data flow
+
+
+
+7.5.9 The activity integration
+The activity system/register is the central register for activities used by all TE Banking systems.  Loan Process is accessing the register by means of activity web services (SOAP).
+
+Each case in LP is related to an activity, and the case related activities has a lot of case related additional attributes besides the "core" activity attributes.
+
+
+
+7.5.10 Integration with DWH
+
+
+7.5.10.1  Data Imported from DWH to Loan Process
+If the bank is going to use the Industry functionality in Loan Process, the Industry part of Admin is dependent on data from the banks DWH. This is the total volume figures for each main industry defined in Industry. The data have to be updated regularly, e.g. each month. Technically this can be solved by batch jobs based on file transfer or a JDBC connection from Admin to a part of the DWH open for Admin.
+
+The volume figures can also be registered directly in the Industry application if there isn't established a communication with the DWH.
+
+It is also possible to import data from DWH and make for instance engagement review activities in the activity system. Technically this can be solved by batch jobs based on file transfer from the banks DWH and SQL procedures which could crate, update activities into the activity system.
+
+
+
+7.5.10.2  Data Exported to the banks DWH from Loan Process
+The long term goal is to export data from Loan Process to the banks via Staging, but timing and delivery issues has resulted in this approach to be given a low priority in the current versions of Loan Process.
+
+The data-export from Loan Process to DWH is basically a one to one dump of tables in the production data-model. There are some exceptions where the production model is flattened out (Balancesheet, Admin). And some comment fields are not included in extract.
+
+The extract is documented as a visual data-model with comments on table and column level including data-types. The model is delivered as a HTML-report with separate DDL files for complete DB creation of all tables in extract.
+
+The extract-job can be started in a regulary basis, e.g. each day, each week og each month. A case is not delivered in extract until it reaches decision-status. Then the case will be included in the extract every day until they reach finished-status. After reading finished-status the case is only delivered once – keeping the volume of the extract as low as possible.
+
+The extract-job creates a set of tables in a separate schema in the database (ecp_dwh2). The tables are filled with data from Loan Process and ECP_ADMIN schemas. Then all data in ecp_dwh2 is dumped to files, and packed into a single tar-archive. The tar-archive is then transferred to the bank.
+
+
+
+
+
+Figure 28 Loan Process data export to DWH
+
+
+
+The data-extract is run in sequence for each bank, packed into separate tar-archives. “Konsern nr” is part of file-name of tar-archive.
+
+Furthermore there are three different “file” formates, which is viewed in more details below:
+
+
+
+
+
+Figure 29 The DWH export « File » formates
+
+7.5.11 Integration with Consultancy system
+It is possible to integrate Loan Process and a 3rd part consultancy system for the different banks.
+
+Some banks have integration between Loan Process and the 3rd part consultancy system RådgiverPM . This is implemented as Single-SignOn and secure URL-jump from Loan Process to RådgiverPM, a security object (SO) from SecureAccess will be sent in the URL as an URL parameter. The customer birthnumber is carried across encrypted in the SO.  For further details, se chapter 11.3.
+
+Loan Process also have the opportunity to collect data and a PDF report from RådgiverPM by sending requests to RådgiverPM Web Services by an internal RPM webservice client like the figure below illustrates.  
+
+
+
+
+
+ Figure 30 Loan Process RPM WS integration
+
+
+
+7.5.12 Integration with SLS
+Loan Process integrates with the core system SLS in order to provide its currency functionality.  SLS expose a set of web services that Loan Process use to provide the integration.
+
+There is one SLS service instance for each SLS ban, but Loan Process communicates with these trough a common gateway; the ESB (ws proxy) which handle the mulitbank routing.
+
+7.5.13 Integration with Card
+Loan Process is integrated with the card administration system both by consuming web services and by using a batch job.
+
+
+Figure 31 Loan Process - Credit Card integration
+
+
+
+7.5.13.1  Credit Card Web Service integration
+Loan Process integrates with Credit Card in order to provide the credit card product. Credit Card expose 2 web services that Loan Process use to provide the product integration. The services that Loan Process uses are listed below.
+
+FKProductList
+FKSubProductList
+7.5.13.2  Credit Card batch integration
+A batch job is defined to load Credit Card data between Loan Process and the Card Administration System (Credit card) to create credit card agreement.
+
+The batch job named "ECP_TO_CAS" dumps data from Loan Process database to a flat file defined by Credit card specification.
+
+The file is transferred, loaded and processed into Credit card.
+
+This process produces a return file from Credit card. The return file is updated with a process status code for every record from the Credit card dump file.
+
+The return file is transferred, loaded and processed back into Loan Process database where the original records are updated with the associated new status.
+
+7.5.14 Key-Information storage in iHub Customer
+Loan Process store predefined Credit key-information for the Customer File view in Sales & Customer Service (SCS) application. Loan Process store these data into a Core Customer database-table (iHub Customer) trough a SOAP customer WS in Core WS
+
+Loan Process store following data as Credit key-information:
+
+Risk-class (XX) and the date when generated
+Collateral-class (nn) and the date when generated
+Risk in NOK and the date when generated
+Collateral-coverage in % and the date when generated
+7.5.15 Integration with the Inspection Logging (ILO)
+To be able to have a total overview of which information (customer relevant information) the case managers in the bank have accessed, a regime for access logging has been established.  This new system fetches relevant reports from a number of different channel systems, including Loan Process. 
+
+The access logging mechanism in Loan Process is implemented by using a new common access logging component, the finance-access-logger.  This component is performing the actual logging to the dedicated file for the specific system. 
+
+Seen from Loan Process, the physical aspect of the logging is therefore something we will not dwell on here.  However, some details are important for the overall understanding.
+
+The access logging file is located at /usr/WAS/insightlog, and this location must thus exist at the application server (If not, the logging will fail)
+If the logging should fail (the part of the logging which is contained by the logging component), Loan Process will not issue any warning or log the error in any way. It's assumed that the systems which retrieve the log files from the application server, has handling for missing files.   
+There will be one file for each application instance (which means that there will be a new file for each restart of the application)
+To be absolute certain that all customer relevant information which has been accessed by a case manager is logged, the Loan Process implementation will attempt to log all pages which are accessed during a session.   However, Loan Process will always know whether or not a page has been accessed before in the same session, so a page will never appear more than once in the log for a given session.
+
+The format of the log file is;
+
+First a Header:
+
+<AccessLogHeader><encoding>iso8859-1</encoding><SourceApplication>EDB Kreditt</SourceApplication><FormatVersionID>1</FormatVersionID><DateTimeCreated>20110815080753</DateTimeCreated></AccessLogHeader>
+
+ Then one record for each accessed page:
+
+<AccessLogRecord><InstitutionID>0000</InstitutionID><CustomerID>00000000000</CustomerID><AccountID></AccountID><Source>EDB</Source><System>ECP</System><UserID>D210X81</UserID><Function>ECP_HME_Mainpage_2</Function><DateTime>20110815080753</DateTime><Description>CaseId: 678664</Description></AccessLogRecord>
+
+Id to each accessed page is contained in the function attribute.  The last part, here; "HME_Mainpage_2", is the actual reference to the page in Loan Process.
+
+7.5.16 Integration with EAM
+EAM is the authorization mechanism used in Loan Process. 
+
+Authorization is in this context management of user privileges within Loan Process, and is not in any way related to management of security (session, log on etc.), even though EAM has integration with  the security mechanisms SA,IDP and SAML (and the Login service EEM).  See more about that here: EAM
+
+Below is a "birdseye" architectural view of the EAM solution and how the "EAM Client tools" is positioned between a Client Application and the EAM Web Application:
+
+
+
+
+
+Figure 32 Loan Process - EAM integration
+
+
+
+The EAM Client Tools is i a java client library for EAM, and essentially all EAM related logic resides there.  Read more about here:  EAM
+
+Before any EAM Autorization interaction is possible in the session, the EAM Subject must be fetched,  The Subject are cached in Loan Process.  The caching mechanism is implemented in:
+
+com.edb.finance.common.ecpcommon.authorization.AuthorizationHolder  
+
+This class handles all privileges calls within Loan Process by using the EAM Client Tools.
+
+The EAM Client tools use the Shiro Security  Framework:  Read about it here:  https://shiro.apache.org/what-is-shiro.html
+
+
+
+
+
+
+
+Figure 33 Overview of the EAM Client Tools
+
+
+
+7.5.16.1  Setup, Initialization and Configuration
+The EAM Client Tools logic is initialized and setup by means of listeners and filters in the LP web.xml. 
+
+The configuration resides in the properties file:  eam-client.properties
+
+The Maven refererence:
+
+      <groupId>com.edb.finance.common</groupId>
+      <artifactId>edb-authorization-client-tools</artifactId>
+
+
+
+In order to operate, the EAM manager (AuthorizationManager) has to be started and stopped in an orderly fashion. 
+
+A set of listener and filters must thus lbe configured in the web.xml file in order to operate, most important is the GenericEamBootContextListener which initialize the EAM Client Tools:
+
+<listener>
+        <listener-class>com.edb.finance.common.components.authorizationclient.listener.GenericEamBootContextListener</listener-class>
+</listener>
+
+
+
+The Shiro must also be setup:
+
+<filter>
+        <filter-name>shiroFilter</filter-name>
+        <filter-class>org.apache.shiro.web.servlet.ShiroFilter</filter-class>
+        <init-param>
+            <param-name>staticSecurityManagerEnabled</param-name>
+            <param-value>true</param-value>
+        </init-param>
+ </filter>
+ <filter-mapping>
+        <filter-name>shiroFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+
+
+And lastly, but very important, the EAMHttpSessionListener which make sure the EAM cashe (EhCache) is flushed for the user when the user log out:
+
+<listener>
+        <listener-class>com.edb.finance.common.components.authorizationclient.listener.EAMHttpSessionListener</listener-class>
+</listener>
+
+If the listener is setup correctly, the following log statment should appear for a user log out:
+
+
+
+2024-09-26 08:24:02,902 [Default Executor-thread-12][139.116.15.46][139.114.200.13][][][][][] INFO com.edb.finance.common.components.authorizationclient.listener.EAMHttpSessionListener - Flushed EAM authorization cache - for userid (C229T10) from company (3229) during sessionDestroyed()
+
+
+
+7.5.16 Electronic land registration
+Electronic land registration (called eTingslysning) has a "home page" which can be found here:  eTinglysing
+
+An overview over the value-chain and the integrated systems that are involved in electronic land-registration in Loan Process: Flyt eTinglsyning Statens Kartverk direkte fra Loan Process
+
+7.5.17 Integration with iHub Organization
+The organization of the bank offices/branches and the case managers has traditionally been functionality implemented as a local administration domain module in the different channels (like the FDFront Rammeverk). 
+
+iHub Organization implements this functionality as a core domain module, with a set of services which can be consumed by the channels. 
+
+7.6 Logging
+7.6.1 Log & Config
+The solutions logs are based on the logging framework SLF4J API which is defined in TE FS Log & Config standard.
+
+7.6.1.1  Operating log
+This log will be used to monitor the system during normal operation. Events concerning the state of the system should be logged in this log. It is important that the log only contains relevant information concerning errors or statuses that can affect Loan Process and possibly result in changes or follow-ups of Loan Process or the runtime environment.
+
+Every error message should have its own error code.
+The error messages are in a dedicated property file.
+The severity of every entry in the log should be defined.
+Stack trace is not to be written to the operating log, but to error log.
+The operating log cannot be switched off.
+
+
+
+
+
+Date
+
+yyyy.MM.dd HH:mm:ss:SSS
+
+Time of the event
+
+HostAddress
+
+String
+
+The IP address of the host logging
+
+ApplicationId
+
+String
+
+Identification for the application logging.
+
+Module
+
+String
+
+Module within the application.
+
+ThreadId
+
+String
+
+If it is a multithread application, the thread ID is put here.
+
+OrgId
+
+Number
+
+The user's OrganisationId.
+
+OrgUnit
+
+String
+
+The user's Organisation Unit
+
+UserId
+
+String
+
+The User ID.
+
+LogCode/
+
+ErrorCode/
+
+MsgId
+
+Number
+
+Unique error code.
+
+Severity/
+
+LogLevel
+
+Message
+
+String
+
+Severity of the message. 4 Levels: INFO, WARNING, SEVERE or CONFIG.
+
+Message
+
+String
+
+The body of the message. Should describe the problem and preferably also the solution.
+
+[Foo1]
+
+String
+
+CaseId. The Loan Process case ID.
+
+[Foo2]
+
+String
+
+CustomerId. The Loan Process customer ID.
+
+[Foo3]
+
+String
+
+Additional information if necessary. Optional field.
+
+7.6.1.2  Performance log
+The Performance log should log the time certain operations take. It should be possible to follow a case/process down to smaller subprocesses to monitor the performance of the system, and, where problems arise, find the exact method/transaction causing the problem.
+
+It should be possible to turn the log off, but it is not a requirement that this can be done during runtime.
+
+
+
+
+
+
+Date
+
+yyyy.MM.dd HH:mm:ss:SSS
+
+The time of the event
+
+ApplicationId
+
+String
+
+The ID of the application logging.
+
+Module
+
+String
+
+Module within the application.
+
+OrgId
+
+Number
+
+The user's Organisation ID.
+
+UserId
+
+String
+
+The user's ID.
+
+CaseId
+
+String
+
+The Loan Process case ID.
+
+ResponseTime
+
+Long
+
+Response time in ms.
+
+Message
+
+String
+
+The body of the message. Describes what the response time is measured on.
+
+7.6.1.3  Journal log
+This log contains events that are important for the audit and traceability of the system. Examples might be input parameters that form the basis for calculations in different parts of the business logic.
+
+The journal log cannot be switched off.
+
+
+
+
+
+
+Date
+
+yyyy.MM.dd HH:mm:ss:SSS
+
+Time of the event
+
+ApplicationId
+
+String
+
+ID of the application logging.
+
+Module
+
+String
+
+Module within the application.
+
+OrgId
+
+Number
+
+The organisation ID of the user.
+
+UserId
+
+String
+
+The user's ID.
+
+CaseId
+
+String
+
+The Loan Process case ID.
+
+SessionId
+
+String
+
+SessionId obtained from the iApi logon
+
+Message
+
+String
+
+The body of the message. Should describe what has been written into the journal log.
+
+7.6.1.4  Debug log
+The debug log contains all debug and trace events that are defined in the application.
+
+Should be possible to turn it off and on during normal operations. Normally turned off.
+
+
+
+
+
+
+Date
+
+yyyy.MM.dd HH:mm:ss:SSS
+
+Time of the event
+
+ApplicationId
+
+String
+
+The ID of the application logging.
+
+Module
+
+String
+
+Module within the application.
+
+OrgId
+
+Number
+
+The user's organisation ID.
+
+UserId
+
+String
+
+The user's ID.
+
+CaseId
+
+String
+
+The Loan Process case ID.
+
+Message
+
+String
+
+The body of the message.
+
+7.6.2 Workflow logs
+The workflow generates it's own logs.  Some of the information in these logs can be redundant, because the Log & Config logs already have similar entries.
+
+7.6.2.1  Access log
+This log contains all servlet calls in the application server. It should be possible to follow a case/casemanager in the log.
+
+The access log cannot be switched off.
+
+7.6.2.2  Error log
+This is the error log that should log all application errors. It also contains the stack trace of the errors.  The statements in this log will also emerge in the application Server's own error log  - SystemErr.log. The error log cannot be switched off.
+
+7.6.2.3  <date_time>.dmp
+Detailed log of application errors (one file for each error). Contains among other things:
+
+Dump of all request parameters.
+Dump of all sessions attributes
+Dump of all relevant case data.
+7.6.2.4  daccess.log
+Logs all servlet calls to the application server. Should normally be turned off.
+
+7.6.2.5  request.log
+Logs all init and post requests. Should normally be turned off.
+
+7.6.2.6  Performance.log
+Logs the time elapsed  during the JSP generation. Should normally be turned off.
+
+7.6.2.7  Case logs
+In addition, Loan Process will have logs primarily used for debugging during development, but which, in certain cases, can be used to find errors during normal operations. This applies to the following logs:
+
+<casenr>_wfl.log  - Logs what rules were used as a basis for page changes in the workflow. Used to trace errors in the workflow configuration and the application. Also logs system errors. Should normally be turned off.
+<casenr>d_wfl.log  - Logs the same type of information as <casenr>_wfl.log , but more detailed.
+<casenr>_journal.log – Logs calculations, analysis result etc.
+7.7 Error handling
+Error handling is divided in two main categories:
+
+User Errors
+System Errors
+User errors are dealt with in each page, which means that the user cannot leave the page before the cause of the error is corrected.  However the user can leave the page without validation and persistance if the stop/exit button is used.
+
+The system errors are errors the user are not able to correct, thus the system must decide which type of error which has arised, and whether or not a spesific message (True for critical errors, session timouts etc.), or a plain stacktrace should be shown to the user.  For further details about the error handling in Loan Process, consult the WAD and DPG.
+
+7.8 Validation
+The validation in Loan Process can be implemented by:
+
+Implementing the validation logic in the Posthandler for each page
+Implementing some part of the validation logic in the workflow tag (max,min,mandatory etc) and some part in the Posthandler for the page (Business validation rules). The wf tags have vairous atributes which can be set.  Consult the WAD for further details.
+Same as the implementation above, but instead of implementing the tag attribute values directly in the JSP, the values are set from admin. To be able to do so, the page with all relevant fields (input fields only) must be defined in admin. Consult the WAD for further details.
+7.9 Multi-bank support
+7.9.1 Loan Process / Database DAO
+For multi-bank support a database connection pool must be defined for each bank. A corresponding Tx Data Source is defined for each bank and linked to the right connection pool.
+
+The Tx Data Source is named using the naming convention:
+
+DataSourceType_DataSourceAccessType_GroupBankId
+
+
+
+In Loan Process the following DataSourceType's are defined:
+
+CASE – The Loan Process database.
+
+INTERNAL – The client's database
+
+EXTERNAL – Not in use
+
+FRONT – The FD Front database
+
+PORTFOLIO – Not in use
+
+ADMIN – The Admin database
+
+OID – The database used to get the unique key.
+
+
+
+This Loan Process DataSourceType's are mapped to the actual TX Data Source DataSourceType in the file SQLDataSourceType.properties.
+
+DataSourceAccessType is defining the access rights. There are 2 AccessType's: RW (Read an write) and RO (Read only).
+
+The GroupBankId is the id that uniquely identifies the bank.
+
+Both DataSourceAccessType and GroupBankId are set on the SessionVO. The DataSourceType are set in the constructor of the SQLProcessor that is used.
+
+See also WAD for a further description of multi-bank support. Ref [3].
+
+7.9.2 Pageflow Configuration
+Pageflow is configured using either xml-configuring files or configuring i java (which what's used) . Several banks can share the same configuration, also banks can have their own configuration )If xml file is used).
+
+Minor differences in pageflow between banks can be configured in the same shared configuration. This is to avoid duplicate configuration files between banks that only have minor differences in configuration.
+
+The bankid is the key to use when marking up differences in configuration files.
+
+7.9.3 Multibank awareness in source code
+There is a predefined variable called "bankId" that can be used in handlers and JSP to program differences between banks. Should there be major differences a bank can be configured to have its own handlers and JSP for a specific area. These files are located by adding 'bankId' to the folder path.
+
+…/main/CUS/CUS_Overview.jsp  (Common default page)
+
+…/main/CUS/1111/CUS_Overview.jsp  (Specific page for bank 1111)
+
+The presentation layer has its own multibank directory where all the elements which may differ are placed, i.e
+
+           \multibank\images\1111 (for bank 1111)
+
+The application will use the bankid-parameter to find the correct image in a session. Examples of other elements which may differ between different banks are css-files, taglibs, xslfo (for generating the pdf-document which contain all the information in the case). As for the images the application will use the bankid-parameter to locate the correct resources.
+
+7.9.4 Configuration of fields
+Through the Admin Application input fields in Loan Process, the application can be controlled by bankid.
+
+It is possible to have separate validation rules for each bank. It is also possible to set readonly-status controlled by bankid.
+
+7.10 Sharing of data between sessions
+Statistical data which is not specific to a session – i.e. not specific to a customer or a case – is stored in a cache. Examples of such data are market products or names of various currencies.
+
+The use of a cache reduces the number of calls to the group database. The cached data is stored for each bank. The data is invalidated once a day. The time of invalidation is configurable in ConfigurationManager.properties. 
+
+Default time is 01.00. This means that changes in the database get through to the application no later than 24 hours after being carried out in the database. If it is desired to update the cache immediately, there is an administration page (admin.jsp) in which one can invalidate a given type of cached data – for a specific bank – without waiting for it to time out. 
+
+Invalidating data in a cache means taking away the relevant data from the cache of the bank in question. The next call for data required from the cache will lead to data being retrieved from the database and saved in the cache when returned.
+
+The Presentation layer therefore treats this type of data in the same way as it does all other data.
+
+7.11 Web Services
+Loan Process will, depending on dialogue with and demand from the customers, offer business services to other applications and portals. This will be done using Web Services.
+
+All Web Services offered by EVRY FS are based on DOC/Literal and contain a header as described in EVRY FS Web Service Standards document. An XML file for this can be found under Web Services Guidelines on wiki. To ensure the greatest possible compatibility with different development tools and operating environments, the Web Services (WSDLs) shall be quality assured against the Basic Profile 1.1 specifications from WS-I.
+
+A common reception system has been established for Web Services that are used by our customers/external systems. This system (WS Proxy) expects the use of the standard EVRY FS Web Services Header.
+
+The Web Services standard also includes error handling and structures for error codes returned to the consumer.
+
+The table below gives an overall view of all Web Services offered and consumed by the application(s).
+
+A list of the services provided by ECPS can be found here:  ECP Services
+
+7.12 Admin Design
+The Admin Framework refers to system values which are constant and which are used in various places in the application, for example threshold values for scoring and the industry register. The Admin Framework is administrated with the aid of an administration application. This administration application is constructed using the same technique as the workflow application.
+
+The figure below shows the areas which are defined in admin.
+
+
+
+Figure 35 Admin sections
+
+
+
+The Admin framework are used by the other application as well, for instance SCS and SSL.  The loan Process integration point for the used admin areas are listed in the table below:
+
+
+
+
+
+
+CREDITKP
+
+EDB Kreditt Kredittprosess
+
+Yes
+
+CREDITKP_U
+
+EDB Kreditt Versjonsuavhengig
+
+No
+
+DEFINE
+
+EDB Kreditt Definering
+
+No
+
+DOCKP
+
+EDB Kreditt Dokumentkontroll
+
+No
+
+CRMEET
+
+EDB Kredittmøte
+
+No
+
+COLLATERAL
+
+Nye Depot
+
+No
+
+POLICY
+
+Policy
+
+Yes
+
+SCORE
+
+Scoring
+
+Yes
+
+Table 13: Admin sections
+
+
+
+It is generally not possible to add parameters to admin or remove them. One may only amend text or values (There are some exceptions though). When changes have been made to parameters and these have been put into production, the version being worked on (working version) becomes the production version.
+
+A new working version is created at the same time. That is to say, at the precise moment of deployment, the product and working versions are identical.
+
+The working version is the version with the highest version number. The production version is the one in which the production flag is set (PRODUCTION = 1 in the table NEW_ADM_VERSION). The old versions remain in the database.
+
+When one starts a new case in Loan Process the case will use the parameters of the production version valid. The Admin version number is stored together with the casenumber and the case will always use this administration parameters.
+
+That is old cases will use the administration parameters for the version which was the production version when the case was created. This is done because we e.g. want to ensure that the score result in an old case don't will change because of changes in the Admin application.
+
+Admin parameters are administrated with the aid of an administration application. This is a general application which is controlled by the data in the database. The main data are in the table NEW_ADM_CATEGORY. This is a tree structure in which the attributes are arranged like the leaves on a tree.
+
+The admin application works in a generic VO structure, while the case uses the same VO architecture as the rest of Loan Process. The generic VO structure is mapped to the VOs of the case with the aid of special map classes.
+
+The admin application is general and not specially linked to Loan Process. If one wishes to enter admin data for an application, the application must be defined in the table NEW_ADM_APPLICATION. Currently the admin application covers Loan Process and Netloan.
+
+
+
+8 Process View
+From a process point of view, the application can be seen as containing 2 major areas of process threads:
+
+Online / screen based processes
+Batch
+8.1 Online / screen based processes
+The online/screen based processes in Loan Process use a workflow engine which is developed by TE FS. Loan Process consists of following online/ screen based processes.
+
+Granting Process for retail and corporate customers
+Engagement renewal Process for corporate customers
+Change Process
+Loss Process
+
+
+8.1.1 Granting Process
+The figure below gives an overview over the main steps in the retail granting process.
+
+
+
+
+
+Figure 36 Loan Process-Granting Retail
+
+
+
+The figure below gives an overview over the main steps in the corporate granting process.
+
+
+
+Figure 37 Loan Process-Granting corporate
+
+
+
+8.1.2 Engagement Renewal Process
+The figure below gives an overview over the steps in the corporate engagement renewal process.
+
+
+
+
+
+Figure 38 Loan Process-Renewal
+
+8.1.3 Change Process
+The figure below gives an overview over the steps in the Change Process.
+
+
+
+
+
+Figure 39 Loan Process-Change
+
+8.1.4 Loss Process
+The figure below gives an overview over the steps in the Loss Process.
+
+
+
+
+
+Figure 40 Loan Process-Loss
+
+
+
+The overall principles for the integration with the core system for the loss process, is shown below.
+
+
+
+
+
+Figure 41 – The overall principles for the core integration in the loss process
+
+8.2 Batch processes
+Standards for batch jobs and job scheduling are defined by EVRY FS standard, which means using CA Unicenter batch framework + specific Java design patterns.
+
+Various extracts and batch jobs are run both to feed Loan Process with data and to extract data from Loan Process.
+
+List of batches / data transfers
+
+Bank segment / values by sector
+Watchlist
+Extraction to dHub - dHUB Batches (Loan Processing)
+Datafeeds to the activity register (specific for each bank and based on KUVE) - KUVE batch
+Delete of cases based on GDPR - Slettebatch - ecp-loan-cases-batch
+Delete of customer information based on GDPR
+eRegistration batch
+Automatic disbursement batch
+Financing letter batch
+Limit batch - Batches in the limit system
+++
+
+
+A list of batches can be found here:  Batches
+
+And the batch architecture can be found here:  Batch Job Architecture
+
+9 Deployment View
+9.1 Deployment View Loan Process
+The figure below gives an overview of the TE Financial Suite Operational Architecture and illustrates where Loan Process, Loan Process clients, Loan Process (ECP) Services, Loan Process fileserver, Admin Client, DOCS and Adobe LiveCyle are deployed in FINODS production environment. 
+
+All these applications are placed at the CSW domain in Area E, the databases Loan Process and Admin are placed in Area B.
+
+The figure also shows that some business services like ECPS, ActivityWS, CoreWS and eSignWS are deployed at different EOS Jetty containers at Area C. SecurityWS are deployed at SOS Jetty containers at Area C.
+
+
+
+
+
+Figure 42 - Loan Process-deployment in FINODS (WLI has been discontinued)
+
+9.1.1 Key figures
+The systems in the Loan Processing domain with assigned number of deployments are:
+
+
+
+
+TFI	6	The trade finance system.  Tailored solution used by one or two banks
+SSL	9	The self service lending system.  Used by most of the ECP banks, but some tier 1 banks has developed ther own self service solution
+POL	6	The policy system.  Used by all ECP banks.
+ECP	101	The loan process system.  Used by all banks (only partial by some banks).
+LIM	2	The joint limit system.  Tailored solution used by only one bank.
+ING	1	The system maintains groups of Industry Code in entities called Industry Groups.  Used by CLR banks.
+FSA	2	This system handles economy analysis for the corporate market.  Not in use for now
+FIA	4	Financial advisory for the retail market.
+ECO	5	The liquidity calculation system.  Used by almost all the ECP banks, and also third party (banks)
+DOC	17	The document systems which handles document templates and production.  Used by all ECP banks, and also third party (banks) and internally in banking
+DIC	1	The discrepancy calculations.  To be used by all banks
+DAS	1	The decision authorization calculations.  Used by all ECP banks and and also third party (banks).
+CGC	1	The customer group system.  Used by third party (banks).
+COT	1	The covenant and terms system.  Used by third party (banks).
+CIR	1	The Company Information Register is a system which provides public data on companies for credit solutions. Not in use for now
+COL	25	The collateral system.  Used by all ECP banks
+CLR	4	The climate risk system.  Used by a limited set of banks.
+New systems and deployments emergs in the loan processing domains all the time, so this is the overview for now, and it consist of 187 deployments which mainly is services, clients and batches
+
+9.1.2 Application environment
+The application is deployed on IBM Liberty. The platform is Red Hat Enterprise Linux version 9.x. The Java runtime version is Java 21.
+
+9.1.3 Database environment
+Loan Process persist all data to its own database. The load on this database is linear with respect to the number of users in the application. For multibank support the database can be divided into different Oracle instances (one for each bank), different schemas (sets of tables) or by separating the data by a bank specific key.
+
+ For Loan Process, the schema approach has been chosen.
+
+There are defined 2 Oracle DB instances - one for each main application. The instances are named Loan Process, and ECPADMIN  for the Loan Process application and the Admin application . In each of these Oracle instances there are one schema for each bank.
+
+The name of the schemas are ECP_9999 and ECP_ADMIN_9999 were 9999 is the main bank group id.
+
+The database is anOracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production Version 19.23.0.0.0 . The platform is Oracle Exadata.
+
+9.1.4  Document fileserver environment
+Loan Process stores documents with both XML and PDF format in this fileserver. Loan Process stores several document-types like letters, case decision-report and case attachments in the Loan Process Linux fileserver with ( Red Hat Enterprise Linux version 7.9 )
+
+This file server was introduced as an interim solution until a more permanent electronic archive solution has been integrated. 
+
+Such a solution has been implemented - DOCAttachement,and a plan for migration from the file server to the new system can be found here:  Migrering av vedlegg fra fil server inn i Doc-attachement database
+
+9.1.5  Security Solution
+The main security solution is Secure Acess for autorisation of URL jump to LP and all internal WS calls.  Overall operational security is handled by the web server (this is part of the FINODS operational setup, and not part of LP in itself).
+
+9.1.6  Monitoring
+The server environment for Loan Process is monitored by means of basic resource monitoring (CPU, memory, file system, etc.) as well as monitoring of application logs. The latter is based on log statements which are of certain interest.
+
+9.1.7  Production configuration
+The Loan Process environment is situated in the existing network infrastructure (Bank & Finance network infrastructure established in 2007).
+
+The environment is established as a High Availability solution, located in Powersite1 and Powersite2.
+
+Loan Process will be established as a "multibank" system, which means that multiple customers (banks) can use the same environment.
+
+
+
+
+
+Figure 43 –Production environment
+
+
+
+This figure does not show involved bank systems or other external systems.
+
+
+
+
+
+Figure 44 Loan Process deployment (iApi has been replaced by CoreWS, IM is now DDS)
+
+
+
+9.1.7.1  Web server / Load balancer
+
+The web server routes the requests to the different application servers, based on the context root in the request. A load balancer is introduced to ensure balanced load between the different application servers.
+
+
+
+9.1.7.2  Application server - Loan Process
+
+The application servers are the hosts for the presentation and the business layer of Loan Process. Loan Process is divided into a set of applications running on different JVMs:
+
+Loan Process
+Loan Process Clients
+This is 4 different applications which all use the same workflow framework as Loan Process are gathered into one application server. They are Covenants, Accounting, Company relations and Credit Meeting.
+Loan Process web services 
+Admin
+
+
+Database server
+
+This is the Loan Process database servers. In addition to the Loan Process db there is a separate database for Admin db.
+
+
+
+Loan Process fileserver
+
+This is a temporary fileserver dedicated to be used from Loan Process only. The goal is to replace this fileserver with a more permanent electronic archive solution like the Total Archive system.
+
+
+
+Application server - ECPS
+
+The application servers that hosts the ECPS business services
+
+
+
+Application server - DOCS
+
+This is the application server that hosts the DOCS business services and Adobe LiveCycle.
+
+
+
+Workstation/Terminal server
+
+The Credit officers use their own workstations to contact Loan Process
+
+
+
+Security server
+
+Secure Access - security solution used for authentication and authorisation of users. 
+
+
+
+Electronic Signature
+
+Electronic Signature used for electronic multi-signature of electronic documents.
+
+
+
+9.1.8  Pilot environment
+Loan Process has a pilot environment. This allows one or more banks to test out newer versions of Loan Process isolated from the rest of the production environment (but nevertheless in real production).  This environment consists of:
+
+1 non-redundant Application Server
+1 non-redundant Database Server
+For the forseeable future though,  only the application server is used for pilot purposes; the necessary export/imports between the production and pilot databases is considered too cumbersome and risky, so the pilot application server environment use the database servers in the production environment.
+
+
+
+
+
+Figure 45 - Pilot environment
+
+
+
+9.2 Deployment View for document service
+9.2.1  Application environment
+The Document service (DOCS) business services are deployed on the EOS platform. 
+
+The DOCS consist of following 4 different business web services:
+
+DocumentWS
+LetterWS
+ReportWS
+DocAdminWS
+9.2.2  Monitoring
+The server environment for Document Service is monitored by means of basic resource monitoring (CPU, memory, file system, etc.) as well as monitoring of application logs.
+
+9.2.3  Single point of failure
+In the current single server solution, each service in Document Service represents a single point of failure, since no form of clustering/load sharing is run. If the Document Service server stops, the solution remain inaccessible until the fault on the server has been corrected. 
+
+9.2.4  Production configuration
+
+
+
+
+Figure 46 DOCS Production environment
+
+
+
+Workstation/Terminal server
+
+The Credit officers use their own workstations to contact Loan Process which could send requests to the DOCS
+
+
+
+Loan Process application server
+
+The application servers are the hosts for the presentation and the business layer of for Loan Process.
+
+
+
+WS Proxy
+
+EVRY FS web service gateway (ESB) server which receives external requests for web services i.e. DocumentWS. Internal requests from Loan Process will go directly from Loan Process application server to the DOCS application server and not through WS Proxy.
+
+
+
+DOCS application server
+
+The application server is the hosts for the Document Services; interfaces, business and integration layer which integrate the service with Adobe LiveCycle server.
+
+ 
+
+Adobe LiveCycle server
+
+The Adobe LiveCyle server is the same physical server as the DOCS application server. Adobe LiveCyle sends documents to a printer and produces e-documents. The document templates are stored at the server disk.
+
+10 Data View
+10.1 Database architecture
+10.1.1  The Loan Process database
+The application has its own data model which reside in its own physical Oracle database. The database is holding all the data in a case.  There shall be as little business logic in the database as possible.
+
+10.1.2 Initialising and reading
+When a credit officer starts up a new case, the application will retrieve all existing information on the specified case from the database and enter the data into the case structure for the session. When creating a new case, the necessary data will be acquired from various EISs and entered into the case.
+
+10.1.3 Description of principle for DAO reading
+The case state, resides in the CaseClientVO object , and is read when starting up a new or reopening an old case.  Reading is done recursively by trying to retrieve all information having to do with the case in the same transaction.
+
+That is to say we first retrieve all primitive information for CaseClientVO. Then sub DAOs are called to populate BaseVO objects on CaseClientVO.
+
+In company with the reading, we must instantiate the relevant ResultProcessor object which implements the SQLResultProcessor interface. This interface contains the method:
+
+public Object[] process(ResultSet rs) throws SQLException;
+
+This method is responsible for processing the result set, i.e. retrieving all necessary data, instantiating VO objects, populating the VO objects with primitive values and entering these VO objects in an array list which is then returned.
+
+The intention is to achieve a separation between query statement and result processing so that we can reuse the result processor in many methods and for many query statements.
+
+10.1.4 Persistence
+The case structure, represented by CaseClientVO, which is located in the credit officer’s session, should be synchronised with the database at all times. To be sure of achieving this objective, we must arrange that:
+
+After each page in the process flow, the static method persist() is invoked with CaseClientVO as input to an object which we have called CasePersistor. The method is responsible for persisting the entire case structure to the database.
+Every single object in the case structure including CaseClientVO extends the BaseVO class. BaseVO includes two important persistence status attributes: valid and changed. These attributes are used by the DAO layer to decide which persistence operation should be performed on the accompanying VO. If the objects are set to status changed, the respective DAO will make either an insert or an update of the object data in the database.
+Persistence to the database should occur sufficiently often that the case structure is synchronised as closely as possible with the database at all times.
+Persistence is initiated by the Workflow Manager at the end of each post handling process.
+
+
+In CasePersistor the synchronisation process itself occurs through CasePersistor initiating a recursive traverse of the entire case structure, analysing the status of each of the objects and updating those objects which have been amended and deleting those objects which are no longer valid.
+
+If these operations are carried out without error, the status of all the affected case objects will be returned to their normal status, which is unchanged and valid. This update occurs through CasePersistor initiating a recursive and reflexive align of all objects in the case structure.
+
+There is a special service for persist and read large data objects, called ClobstoreProxy This is not a part of the CasePersistor but can be called on demand. The caller is responsible for handling the transaction. Because this is not a part of the standard transaction mechanism, it is important that the transaction is commited/rollbacked as soon as possible. The service can store both CLOB and XMLType in the database. For the XMLType the input string has to be a valid XML. The definition of the CLOB and XML has to be inserted in the table CPLOBSTOREDEF.
+
+The typical use of the ClobstoreProxy is to store the input to an external service, e.g. score, and the return from the service. If the input/output is a XML string one stores the value in the XMLType column, if it's an input/output string one stores the value in the CLOB column. In the definition table one defines if it is a score string, if it is an input or output, if it is a XML or CLOB etc.
+
+The contents of the CPLOBSTORE are typical used by the DWH to find the exact input/output from a service without collecting all the information in the structured data model. 
+
+10.1.4 Invalidating
+Invalidating is initiated by the Workflow Manager. Invalidating is done during the post handling process.
+
+The Workflow Manager analyses changes in the credit officer’s input, i.e. changes in the temporary area for input data. Then it refers to the invalidating table and retrieves a list of future process stages which must be invalidated as a consequence of these changes.
+
+These process stages will be called successively and each process stage is responsible for invalidating itself, i.e. setting the relevant objects to invalid.
+
+10.1.5 Admin
+Admin data is cached for the session. It is retrieved via JDBC and cached in a static object structure. Here, both the content and structure of the admin data must be amended.
+
+10.2 Date flow
+Data flow in the system is shown below:
+
+
+
+
+
+
+
+Figure 47 – Data Flow (FDFront is obviously not part of the eco system anymore)
+
+
+
+
+
+Loan Process
+
+The internal Loan Process database where all the case data is stored. Collateral is stored in the Loan Process database, but with its own tables.
+
+Covenant
+
+The Covenant data model. Physically this can be in the Loan Process database sid.
+
+Creditmeeting
+
+The Creditmeeting data model. Physically this can be in the Loan Process database sid.
+
+Accounting
+
+The Accounting data model. Physically this can be in the Loan Process database sid.
+
+Company
+
+The Company relation data model. Physically this can be in the Loan Process database sid.
+
+Core
+
+The Core system in TE FS. Holds the original Marked products, product, Accounts, production data and Archive
+
+Admin
+
+This is the Admin database used by the Loan Process application.
+
+The Admin user in each bank can change the data defined in Admin. Typical data that is stored in Admin is: Policy, Score, Price, Follow Up, Document etc.
+
+Industry
+
+This is the grouping of the Industry defined by the bank. The Industry can be grouped in 4 levels.
+
+Authorisation (EAM)
+
+Authorisation Module. Holds user authorisation based on roles
+
+Organisation
+
+The Organisation application (IHUB ORG) holds data about the banks organisation and case managers.
+
+Security Service (SA)
+
+Security Service used to authenticate the user.  Security Server.
+
+eSign services
+
+eSign web services that holds eSign-order and documents temporarily during eSign process until eSigned document is placed in SDO acricve and eSign-order is finish.
+
+DWH
+
+The banks Data Warehouse. Get original data from Loan Process.  (among others)
+
+Scoring
+
+Credit calculation server.
+
+Adobe LiveCycle
+
+Document handling.
+
+Advisor Service
+
+Advisor service for personal customer
+
+Information Management (DDS)
+
+A common service for getting public information. (Credit, income, tax, property information and values, and official Land Registration)
+
+Activity
+
+The Activity data model. There is an own application, Worklist, used to query the activity data model.
+
+Table 14 DB overview
+
+
+
+10.3 Domain Model
+
+
+
+
+
+
+Figure 48 – Part of domain Model 
+
+
+
+10.4 Date Model
+TODO
+
+
+
+11 Security View
+11.1 Introduction
+A comprehensive architecture for security involves many aspects and viewpoints. Many different security needs must be met. The architecture must precisely describe the frameworks and mechanisms which should control the following areas:
+
+Authentication [How to ensure that a user is who he says he is]
+Authorization [How to ensure that a user can only access the information he should be able to]
+Confidentiality [Establish mechanisms to guard against undesirable access to data, lines/network or when saved]
+Integrity [Establish mechanisms to ensure that data cannot be amended, when being transmitted or when saved]
+Authentication and authorization are illustrated and described in the following sections.
+
+Low level authorization ("power of attorney" – fullmakter, limits etc.) is part of the application logic and not described in detail here. These parameters and rules are maintained in the LP Admin framework using the Admin client.
+
+Mechanisms for confidentiality and integrity include security mechanisms like SSL, use of cookies and other session security mechanisms. 
+
+Interfaces between subsystems must be secured with firewalls where appropriate.
+
+
+
+11.2 UC Case references
+The overall functionality / requirements are described in UC (and UCR):
+
+UC-47.1 Tilgang til EDB Kreditt fra FD Front (now SCS)
+UC 46.1 Autorisasjoner  i EDB Kreditt
+11.2.1 Log on to Loan Process
+As shown previously, the user can start the Loan Process application, from the Customer File view in Sales & Customer Service (SCS).
+
+
+
+
+
+Figure 49 Logging On
+
+11.2.2 Authenticate User
+The authentication of the Loan Process user is done by a standard SA web service (SECSSecurityTokenValidate_V...) which validates the security token it receives.
+
+11.2.3 Authorize User
+Loan Process is responsible for the user authorization. The authorization information is held by Authorization Module (EAM) and Loan Process utilize this in a JAAS-like design pattern.
+
+11.2.4  Administrate User
+The users will be administrated in iHub Organisation 
+
+This Use Case covers what an administrator must do to administrate the Loan Process users (add user info, change user info, delete user info). The main focus will be on where different user information is stored and what must be done by the administrator in which system(s) when changes occur.
+
+
+
+
+
+
+
+Figure 50  Administrate User
+
+
+
+11.3 Authentication
+
+
+11.3.1 Starting in SCS
+SCS can be started from Authentication & Menu application (using the LoginService module as authentication) – EEM
+
+A jump-SO (for jumping from SCS to Loan Process) is obtained and sent by the same process/ method as described for "Jump between Loan Process Modules" in the next section.
+
+11.3.2 Jumps between Loan Process modules
+After the initial authentication, it is possible to jump from one Loan Process module to another. This is listed in the table in chapter 5. The same principle applies for the Consultancy system RådgiverPM.
+
+Technically this is done by means of "jumpSO" issued by Secure Access.
+
+
+
+
+
+
+
+
+
+Figure 51 Loan Process-to-Loan Process flow
+
+
+
+Flow description
+
+1) Loan Process validates incoming SO by using the using the Secure Access web service SECSSecurityTokenValidate_V1_0
+
+2) Loan Process invokes the Secure Access web service SECSSecurityTokenCreate_V2_0 to generate SO
+
+3) Jumps with SO and other parameters (not involving FD Front or XIS) to a other Loan Process client application
+
+4) Loan Process client application receives and validates incoming SO by using the Secure Access web service SECSSecurityTokenValidate_V1_0
+
+
+
+11.4 Authorization
+
+
+
+
+Figure 52 Authorization / EAM
+
+
+
+Authorization is performed in the Authorisation application / Module (EAM). The bank itself can administrate the authorizations and authorizations roles via the Authorisation Module Client.
+
+The authorization model is made up of roles which contain one or more permissions.  These can be changed and regrouped by the administrators within each bank.
+
+Authorization will be used on several levels within the applications: initially a check will establish if the user is authorized to run the given process/function in the application based on which authorization role the user have.
+
+
+
+11.5 Confidentiality
+It is assumed that any requirement for confidentiality will be resolved with the aid of line encryption in the operating solution. No provision is being made for this as far as applications are concerned. It is more relevant to communication with external systems such as Lindorff.
+
+11.6 Integrity
+No provision is being made for special measures to ensure integrity, that is to say the possibility of changing data content, beyond the following mechanisms:
+
+Security object takes care of secure transmission of username and essential application parameters such as customer number.
+We presuppose that the operating solution is sufficiently secure that there is no need for special application measures to guard against changes when transmitting data between parties within the solution.
+There is defined one schema for each bank in the database.
+There is defined PK and FK for every table in the database. Relation between all tables has Oracle constraints.
+11.7 Overview of involved subsystems and security mechanisms
+
+
+
+
+Figure 53 Involved systems
+
+
+
+
+
+
+
+Table 15 Involved systems
+
+
+
+12 Size and Performance View
+The goal is that the architecture should support the requirements for performance.
+
+Performance requirements for Loan Process / typical traffic pattern for the banks has been defined and given the project, and has been used as basis for establishing the performance tests.
+
+
+
+12.1 Performance and stability
+During the design and implementation of the application, the project has focused on will performance related features and areas, such as
+
+response times, with back end systems and in Loan Process
+current Loan Process (KP) architecture (further optimization of existing system / architecture)
+memory (avoid memory loss / leakage, keep session objects etc. on an acceptable size)
+servers
+network
+parallelism (multi-threading) in critical areas
+performance logging
+The project will give an assurance that this is possible by performing load tests based on the traffic patterns and numbers mentioned above. This is organised as part of the Technical Tests.
+
+12.1.1 Performance issues in the integration layer
+There is taken much effort to improve the performance against the Loan Process databases. The most important tasks are:
+
+Collecting all the database operation in a long list and then sending the list to the SQLProcessor for processing. This is done in one transaction and in that way one reduce the number of transaction to a minimum
+the list of database operations are sorted so one can use JDBC batch execution
+only update the database with the data objects that is marked changed
+The unique key generator (SQLOIDGeneratot) produce the LOW part of the key in internal memory. In that way one reduce the roundtrips to the database considerably
+Select statements can set a fetch size. For statements retrieving a lots of data this is very important
+12.2 Scaling
+The application shall have an architecture which permits scaling both vertically and horizontally. Vertically we scale/divide the solution in terms of web servers, application servers and database servers.
+
+For each level/layer (server type) above, it should also be possible to achieve horizontal scaling by introducing more physical servers and balancing traffic load across them.
+
+This scaling is done with the aid of clustering, which also gives greater security in respect of application uptime, i.e. interruption handling and failover. 
+
+Session replication is not supported; if a failover switch should occur, the affected users must reestablish their connectionQuality Attributes.
