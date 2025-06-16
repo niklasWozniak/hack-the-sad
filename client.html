@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LLM Chatbot</title>
-    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
     <script>
         function sendMessage(event) {
             event.preventDefault();
@@ -16,7 +15,7 @@
 
             const userMessage = document.createElement('div');
             userMessage.className = 'message user';
-            userMessage.textContent = message;
+            userMessage.textContent = "🧍: " + message;
             chatLog.appendChild(userMessage);
 
             const spinner = document.createElement('div');
@@ -37,7 +36,7 @@
                     document.getElementById('spinner').remove();
                     const botMessage = document.createElement('div');
                     botMessage.className = 'message bot';
-                    botMessage.textContent = data?.response || 'No response';
+                    botMessage.textContent = "🤖: " + data?.response || 'No response';
                     chatLog.appendChild(botMessage);
                     chatLog.scrollTop = chatLog.scrollHeight;
                 })
@@ -46,6 +45,7 @@
                     const errorMsg = document.createElement('div');
                     errorMsg.className = 'message bot';
                     errorMsg.textContent = 'Error connecting to chatbot.';
+                    errorMsg.style.color = 'red';
                     chatLog.appendChild(errorMsg);
                 });
 
@@ -53,15 +53,59 @@
         }
     </script>
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 1rem; }
-        #chat-container { max-width: 600px; margin: 0 auto; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: linear-gradient(-45deg, #1e3c72, #2a5298, #1e3c72, #0f2027);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        @keyframes gradientShift {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+        h1 {
+            text-align: center;
+            font-size: 3rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        #chat-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 20px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); }
         .message { margin: 0.5rem 0; }
-        .user { text-align: right; color: blue; }
-        .bot { text-align: left; color: green; }
+        .user { text-align: right; color: white; }
+        .bot { text-align: left; color: white; }
         form { display: flex; gap: 0.5rem; margin-top: 1rem; }
         input[type="text"] { flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
-        button { padding: 0.5rem 1rem; border: none; background: #007BFF; color: white; border-radius: 4px; cursor: pointer; }
-        button:hover { background: #0056b3; }
+        button {
+            background: #3823b3;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            box-shadow: 0 0 10px #3823b3;
+            transition: box-shadow 0.3s ease-in-out; cursor: pointer; }
+        button:hover { box-shadow: 0 0 20px #3823b3, 0 0 30px #3823b3; }
         .spinner {
             display: inline-block;
             width: 12px;
@@ -79,7 +123,7 @@
 </head>
 <body>
 <div id="chat-container">
-    <h1 style="text-align: center;">Loan process Chatbot</h1>
+    <h1>Loan process Chatbot</h1>
     <div id="chat-log">
         <!-- Messages will appear here -->
     </div>

@@ -28,7 +28,7 @@ little LLM for querying LP info
 # chroma-db setup
 * pulling the chroma-db image: docker pull chromadb/chroma:latest
 * running the image: docker run -d --name chroma-db -p 8000:8000 -v $(pwd)/chroma_data:/chroma/chroma -e IS_PERSISTENT=TRUE -e PERSIST_DIRECTORY=/chroma/chroma chromadb/chroma:latest
-* (OPTIONAL) verifying it is running: curl http://localhost:8000/api/v1/heartbeat
+* (OPTIONAL) verifying it is running: curl http://localhost:8000/api/v2/heartbeat
 ```
 import chromadb
 
