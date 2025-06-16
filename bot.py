@@ -68,7 +68,7 @@ def query():
             
             # Send request to model
             response = requests.post(
-                "http://localhost:8080/api/chat", #todo: check that the endpoint is correct!
+                "http://localhost:11434/api/chat", #todo: check that the endpoint is correct!
                 headers={"Content-Type": "application/json"},
                 json={
                     "model": "mistral-nemo",
